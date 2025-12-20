@@ -1,4 +1,4 @@
-# CyberScan Elite - Ultimate Unique Cybersecurity-Themed Port Scanner (2025 Edition)
+# CyberScan Elite - FIXED & Enhanced (No Errors, Better Banner Grabbing)
 
 from flask import Flask, render_template_string, request
 import socket
@@ -30,22 +30,45 @@ port_threats = {
     23: "Telnet: Zero encryption. Replace with SSH now!",
 }
 
+# === FIXED grab_banner function ===
 def grab_banner(ip, port):
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(2)
+        sock.settimeout(3)  # Slightly increased for reliability
         sock.connect((ip, port))
-        banner = sock.recv(1024).decode('utf-8', errors='ignore').strip()
+        
+        banner = ""
+        
+        # First, try to receive any automatic banner
+        try:
+            initial = sock.recv(1024)
+            if initial:
+                banner += initial.decode('utf-8', errors='ignore').strip()
+        except:
+            pass
+        
+        # For HTTP/HTTPS ports, send GET request if needed
         if port in [80, 443, 8080, 8443]:
-            sock.send(b"GET / HTTP/1.0\r\n\r\n")
-            banner += "\n" + sock.recv(1024).decode('utf-8', errors='ignore').strip()
+            try:
+                sock.send(b"GET / HTTP/1.0\r\n\r\n")
+                response = sock.recv(2048)  # Larger buffer for headers
+                if response:
+                    decoded = response.decode('utf-8', errors='ignore').strip()
+                    if decoded:
+                        banner += ("\n" + decoded) if banner else decoded
+            except:
+                pass
+        
         sock.close()
+        
         if banner:
-            return banner[:300]
+            return banner[:500]  # Increased limit slightly for better info
+        else:
+            return "No banner grabbed"
     except:
-        pass
-    return "No banner grabbed"
+        return "No banner grabbed"
 
+# === Rest of the functions (unchanged) ===
 def scan_target(target_ip, port_range):
     ports_to_scan = {
         "common": common_ports,
@@ -73,7 +96,7 @@ def scan_target(target_ip, port_range):
                 pass
             q.task_done()
 
-    for _ in range(50):
+    for _ in range(60):  # Slightly more threads for speed
         t = threading.Thread(target=worker)
         t.daemon = True
         t.start()
@@ -94,7 +117,7 @@ def resolve_target(target):
         except:
             return None, target
 
-# === Ultra-Unique Cyberpunk + Glassmorphism + Neon Glow HTML Template ===
+# === Same Stunning Cyberpunk UI (No Changes Needed) ===
 HTML_TEMPLATE = '''
 <!DOCTYPE html>
 <html lang="en">
@@ -313,6 +336,6 @@ def index():
     )
 
 if __name__ == '__main__':
-    print("⚡ CyberScan Elite launching...")
-    print("Access the matrix at: http://127.0.0.1:5000")
+    print("⚡ CyberScan Elite launching... [FIXED VERSION]")
+    print("Enter the matrix: http://127.0.0.1:5000")
     app.run(host='127.0.0.1', port=5000, debug=False)
