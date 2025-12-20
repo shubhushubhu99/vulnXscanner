@@ -25,7 +25,7 @@ port_threats = {
     21: "FTP: Cleartext creds. Use SFTP (Port 22).",
     23: "Telnet: Highly insecure. Replace with SSH.",
 }
-severity_map = {23: "Critical", 21: "High", 445: "High", 3389: "High", 22: "Medium", 80: "Medium", 443: "Low"}
+severity_map = {23: "Critical", 21: "High", 445: "High", 3389: "High", 22: "Medium", 80: "Medium", 443: "Low", 3306:"Critical"}
 
 def grab_banner(ip, port):
     try:
@@ -300,6 +300,7 @@ HTML_TEMPLATE = '''
         <a href="#" class="nav-item active">Dashboard</a>
         <a href="#" class="nav-item">Scan History</a>
         <a href="#" class="nav-item">Vulnerability Database</a>
+        <a href="/subdomain" class="nav-item">Subdomain Finder</a>
         <a href="#" class="nav-item" style="margin-top:auto">Settings</a>
     </div>
 
@@ -357,6 +358,54 @@ HTML_TEMPLATE = '''
 </html>
 '''
 
+SUBDOMAIN_TEMPLATE = '''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subdomain Finder - VulnX</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { background: #0a0c10; font-family: Inter; color: white; }
+        .container { max-width: 750px; margin: 50px auto; background:#12151c; padding:30px; border-radius:12px; }
+        input[type=text]{width:100%;padding:13px;border-radius:8px;border:1px solid #232833;background:#0d1117;color:white;}
+        button{margin-top:20px;width:100%;background:#10b981;color:black;padding:14px;border-radius:8px;border:none;font-weight:600;cursor:pointer;}
+        .result-box{background:#010409;padding:15px;border-radius:8px;border:1px solid #232833;margin-top:20px;font-family:monospace;}
+        a{color:#10b981;text-decoration:none;}
+    </style>
+</head>
+<body>
+    <div style="padding:20px">
+        <a href="/">← Back to Dashboard</a>
+    </div>
+
+    <div class="container">
+        <h2>🔍 Subdomain Finder</h2>
+        <p>Find valid subdomains associated with any hostname</p>
+
+        <form method="post">
+            <input type="text" name="domain" placeholder="example.com" required>
+            <button type="submit">Find Subdomains</button>
+        </form>
+
+        {% if subdomains %}
+        <div class="result-box">
+            {% for sub in subdomains %}
+                <div>✔ {{ sub }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if message %}
+        <div class="result-box">{{ message }}</div>
+        {% endif %}
+    </div>
+
+</body>
+</html>
+'''
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     # Default empty state
@@ -396,6 +445,42 @@ def index():
         deep_scan=deep_scan,
         log_lines=log_lines
     )
+
+def check_subdomain(domain, sub):
+    try:
+        socket.gethostbyname(f"{sub}.{domain}")
+        return True
+    except:
+        return False
+
+@app.route('/subdomain', methods=['GET', 'POST'])
+def subdomain_page():
+    subdomains = []
+    message = ""
+    
+    default_list = [
+        "www", "mail", "ftp", "dev", "test", "cpanel", 
+        "api", "blog", "shop", "admin", "beta", "stage"
+    ]
+
+    if request.method == "POST":
+        domain = request.form.get("domain").strip()
+
+        if domain:
+            for sub in default_list:
+                full = f"{sub}.{domain}"
+                if check_subdomain(domain, sub):
+                    subdomains.append(full)
+
+            if not subdomains:
+                message = " No subdomains detected"
+
+    return render_template_string(
+        SUBDOMAIN_TEMPLATE,
+        subdomains=subdomains,
+        message=message
+    )
+
 
 if __name__ == '__main__':
     print("VulnX is starting...")
