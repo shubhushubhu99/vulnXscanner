@@ -18,7 +18,6 @@ A high-performance Python + Flask based security scanner that performs real-time
 ---
 
 ## 📸 Preview Screenshots  
-> Replace these placeholders after uploading screenshots to GitHub
 
 ### 🖥 Dashboard  
 ![Dashboard Screenshot](https://github.com/shubhushubhu99/vulnXscanner/blob/main/Screenshot_2025-12-23_00_20_23.png)
