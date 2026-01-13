@@ -146,10 +146,11 @@ You can contribute in many ways:
 - Refactor or optimize existing code  
 - Fix bugs and issues  
 
-### 📚 Documentation
-- Improve README or docs  
-- Add usage examples  
-- Improve comments and clarity  
+## 📚 Documentation
+
+- [Project Overview](docs/overview.md)
+- [Project Architecture](docs/architecture.md)
+ 
 
 ### 🎨 UI / UX
 - Improve responsiveness  
