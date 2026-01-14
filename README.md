@@ -146,10 +146,11 @@ You can contribute in many ways:
 - Refactor or optimize existing code  
 - Fix bugs and issues  
 
-### 📚 Documentation
-- Improve README or docs  
-- Add usage examples  
-- Improve comments and clarity  
+## 📚 Documentation
+
+- [Project Overview](docs/overview.md)
+- [Project Architecture](docs/architecture.md)
+ 
 
 ### 🎨 UI / UX
 - Improve responsiveness  
@@ -231,6 +232,28 @@ git push origin feature/your-feature-name
 ```bash 
 👉 https://vulnx-scanner-production.up.railway.app/  
 ```
+## 📁 Project Structure
+
+```text
+project-root/
+│
+├── src/
+│   └── app.py
+│
+├── images/
+│   ├── Screenshot_2025-12-23_00_20_23.png
+│   ├── Screenshot_2025-12-23_00_20_30.png
+│   └── Screenshot_2025-12-23_00_20_53.png
+│
+├── config/
+│   ├── Procfile
+│   ├── vercel.json
+│   └── .runtime.txt
+│
+├── Dockerfile
+├── requirements.txt
+├── .gitignore
+├── README.md
 
 **⭐ If you like this project, please give it a star on GitHub! ⭐**
 
