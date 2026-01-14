@@ -322,10 +322,12 @@ HTML_TEMPLATE = """
             <p>Perform real-time port analysis and service finger-printing.</p>
         </div>
         <div class="search-container">
-            <form method="post">
+            <form method="post" onsubmit="showLoading()">
                 <div class="input-group">
                     <input type="text" name="target" placeholder="Enter IP or Hostname (e.g. scanme.nmap.org)" required value="{{ original_target }}">
-                    <button type="submit" class="btn-primary">Analyze Target</button>
+                    <button type="submit" class="btn-primary" id="analyzeBtn">
+                    Analyze Target
+                    </button>
                 </div>
                 <div class="options-bar">
                     <label><input type="checkbox" name="deep" {{ 'checked' if deep_scan else '' }}> Deep Scan (1-1024)</label>
@@ -489,6 +491,15 @@ HTML_TEMPLATE = """
         document.body.appendChild(modal);
     }
     </script>
+    <script>
+    function showLoading() {
+        const btn = document.getElementById("analyzeBtn");
+        btn.disabled = true;
+        btn.innerText = "Analyzing...";
+        btn.style.opacity = "0.6";
+        btn.style.cursor = "not-allowed";
+    }
+    </script>
 </body>
 </html>
 """
@@ -517,9 +528,11 @@ SUBDOMAIN_TEMPLATE = '''
     <div class="container">
         <h2>🔍 Subdomain Finder</h2>
         <p>Find valid subdomains associated with any hostname</p>
-        <form method="post">
+        <form method="post" onsubmit="showSubdomainLoading()">
             <input type="text" name="domain" placeholder="example.com" required>
-            <button type="submit">Find Subdomains</button>
+            <button type="submit" id="subdomainBtn" class="btn-primary">
+            Find Subdomains
+            </button>
         </form>
         {% if subdomains %}
         <div class="result-box">
@@ -532,6 +545,15 @@ SUBDOMAIN_TEMPLATE = '''
         <div class="result-box">{{ message }}</div>
         {% endif %}
     </div>
+    <script>
+    function showSubdomainLoading() {
+        const btn = document.getElementById("subdomainBtn");
+        btn.disabled = true;
+        btn.innerText = "Finding...";
+        btn.style.opacity = "0.6";
+        btn.style.cursor = "not-allowed";
+    }
+    </script>
 </body>
 </html>
 '''
