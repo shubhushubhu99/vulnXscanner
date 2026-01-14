@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Subdomain Finder | VulnX{% endblock %}
+
+{% block content %}
+<div style="padding:20px">
+    <a href="/">← Back to Dashboard</a>
+</div>
+<div class="container">
+    <h2>🔍 Subdomain Finder</h2>
+    <p>Find valid subdomains associated with any hostname</p>
+    <form method="post" onsubmit="showSubdomainLoading()">
+        <input type="text" name="domain" placeholder="example.com" required>
+        <button type="submit" id="subdomainBtn" class="btn-primary">
+            Find Subdomains
+        </button>
+    </form>
+    {% if subdomains %}
+    <div class="result-box">
+        {% for sub in subdomains %}
+        <div>✔ {{ sub }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if message %}
+    <div class="result-box">{{ message }}</div>
+    {% endif %}
+</div>
+
+<style>
+    .container {
+        max-width: 750px;
+        margin: 50px auto;
+        background: #12151c;
+        padding: 30px;
+        border-radius: 12px;
+    }
+
+    input[type=text] {
+        width: 100%;
+        padding: 13px;
+        border-radius: 8px;
+        border: 1px solid #232833;
+        background: #0d1117;
+        color: white;
+    }
+
+    button {
+        margin-top: 20px;
+        width: 100%;
+        background: #10b981;
+        color: black;
+        padding: 14px;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .result-box {
+        background: #010409;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #232833;
+        margin-top: 20px;
+        font-family: monospace;
+    }
+
+    a {
+        color: #10b981;
+        text-decoration: none;
+    }
+</style>
+
+<script>
+    function showSubdomainLoading() {
+        const btn = document.getElementById("subdomainBtn");
+        btn.disabled = true;
+        btn.innerText = "Finding...";
+        btn.style.opacity = "0.6";
+        btn.style.cursor = "not-allowed";
+    }
+</script>
+{% endblock %}

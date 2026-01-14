@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Security Scanner | VulnX{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>Security Scanner</h1>
+    <p>Perform real-time port analysis and service finger-printing.</p>
+</div>
+<div class="search-container">
+    <form method="post" onsubmit="startScan(event)">
+        <div class="input-group">
+            <input type="text" name="target" id="targetInput" placeholder="Enter IP or Hostname (e.g. scanme.nmap.org)"
+                required value="{{ original_target }}">
+            <button type="submit" class="btn-primary" id="analyzeBtn">
+                Analyze Target
+            </button>
+        </div>
+        <div class="options-bar">
+            <label><input type="checkbox" name="deep" id="deepScan" {{ 'checked' if deep_scan else '' }}> Deep Scan
+                (1-1024)</label>
+            <label><input type="checkbox" checked> OS Detection</label>
+            <label><input type="checkbox" checked> Aggressive Mode</label>
+        </div>
+    </form>
+    {% if results is not none or log_lines %}
+    <form method="post" action="/clear">
+        <button type="submit" class="btn-clear">
+            🗑️ Clear Results
+        </button>
+    </form>
+    {% endif %}
+</div>
+
+<div class="terminal" id="terminal">
+    {% if log_lines %}
+    {% for line in log_lines %}
+    <div>> {{ line }}</div>
+    {% endfor %}
+    {% endif %}
+</div>
+
+<div id="resultsContainer">
+    {% if results is not none %}
+    <div class="results-grid">
+        {% for port, service, banner, severity, threat in results %}
+        <div class="card"
+            onclick="showDetailedAnalysis({{ port }}, '{{ service|replace("'", "\\'") }}', '{{ banner|replace("'", "\\'") }}', '{{ severity }}')">
+            <span class="severity-badge {{ severity }}">{{ severity }}</span>
+            <div class="port-info">Port {{ port }}</div>
+            <div class="service-name">{{ service }} Service Detected</div>
+            <div class="banner-text">{{ banner }}</div>
+            <div class="remediation">
+                <span class="remediation-label">Remediation Guide</span>
+                {{ threat }}
+            </div>
+            <div class="ai-hint">
+                🔍 Click for AI expert analysis
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% if not results %}
+    <div style="text-align: center; padding: 40px; background: var(--bg-card); border-radius: 12px;">
+        <p style="color: var(--accent); font-weight: 600;">No open ports found.</p>
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/scanner.js') }}"></script>
+{% endblock %}

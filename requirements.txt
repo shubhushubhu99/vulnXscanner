@@ -1,3 +1,7 @@
-Flask
-gunicorn
-requests
+Flask==2.2.5
+Flask-SocketIO==5.3.4
+eventlet==0.33.3
+gunicorn==20.1.0
+requests==2.31.0
+python-socketio==5.8.0
+python-engineio==4.4.1

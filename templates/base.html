@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}VulnX | Security Scanner{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <div class="hamburger" onclick="this.parentElement.querySelector('.sidebar').classList.toggle('open')">
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+    <div class="sidebar">
+        <div class="logo"><span>◈</span> VulnX</div>
+        <a href="/" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">Dashboard</a>
+        <a href="/history" class="nav-item {% if active_page == 'history' %}active{% endif %}">Scan History</a>
+        <a href="#" class="nav-item">Vulnerability Database</a>
+        <a href="/subdomain" class="nav-item {% if active_page == 'subdomain' %}active{% endif %}">Subdomain Finder</a>
+        <a href="#" class="nav-item" style="margin-top:auto">Settings</a>
+    </div>
+    <div class="content">
+        {% block content %}{% endblock %}
+        <footer>
+            VulnX Security Engine • Enterprise Version 2.0 • 2025
+        </footer>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

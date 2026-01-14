@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Scan History | VulnX{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>Scan History</h1>
+    <p>Review your previous security scans.</p>
+</div>
+
+<div class="history-container">
+    {% if history %}
+    <table class="history-table">
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Target</th>
+                <th>IP Address</th>
+                <th>Ports Found</th>
+                <th>Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in history %}
+            <tr>
+                <td>{{ item.timestamp }}</td>
+                <td>{{ item.target }}</td>
+                <td>{{ item.ip }}</td>
+                <td><span class="badge">{{ item.ports_found }} open</span></td>
+                <td>{{ 'Deep' if item.deep_scan else 'Common' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div style="text-align: center; padding: 60px; background: var(--bg-card); border-radius: 12px;">
+        <p style="color: var(--text-secondary);">No scan history found yet. Start your first scan from the dashboard!
+        </p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .history-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--bg-card);
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+    }
+
+    .history-table th,
+    .history-table td {
+        padding: 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .history-table th {
+        background: #0d1117;
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .history-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .history-table tr:hover {
+        background: rgba(16, 185, 129, 0.05);
+    }
+
+    .badge {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--accent);
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
