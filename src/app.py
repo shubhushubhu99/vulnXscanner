@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 from flask_socketio import SocketIO, emit
 from core.scanner import resolve_target, scan_target, check_subdomain
 import json
@@ -67,7 +67,8 @@ def clear():
     global latest_results
     latest_results = {'results': None, 'target': '', 'deep_scan': False}
     # Also clear history file for fresh start if requested? No, usually clear just UI.
-    return jsonify({'status': 'cleared'})
+    return redirect(url_for('index'))
+    #return jsonify({'status': 'cleared'})  Earlier return statement commented out
 
 @app.route('/subdomain', methods=['GET', 'POST'])
 def subdomain_page():
