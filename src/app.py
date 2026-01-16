@@ -1,8 +1,11 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from flask_socketio import SocketIO, emit
 from core.scanner import resolve_target, scan_target, check_subdomain
+from core.reporter import generate_pdf_report
 import json
 import os
+import uuid
+from flask import send_file
 
 app = Flask(__name__, 
     template_folder='../templates',
@@ -87,6 +90,23 @@ def subdomain_page():
     
     return render_template('subdomain.html', subdomains=subdomains, message=message, active_page='subdomain')
 
+@app.route('/export/<scan_id>', methods=['GET'])
+def export_report(scan_id):
+    history = load_history()
+    scan_data = next((item for item in history if item.get('id') == scan_id), None)
+    
+    if not scan_data:
+        return "Scan not found", 404
+        
+    pdf_buffer = generate_pdf_report(scan_data)
+    
+    return send_file(
+        pdf_buffer,
+        as_attachment=True,
+        download_name=f"vulnx_report_{scan_data.get('target', 'unknown')}_{scan_data.get('timestamp')}.pdf",
+        mimetype='application/pdf'
+    )
+
 # WebSocket Events
 @socketio.on('start_scan')
 def handle_scan(data):
@@ -122,9 +142,11 @@ def run_scan_task(target, deep_scan):
         latest_results['deep_scan'] = deep_scan
         
         history_item = {
+            'id': str(uuid.uuid4()),
             'target': target,
             'ip': ip,
             'ports_found': len(res_list),
+            'results': res_list, # Need to save full results for the report!
             'timestamp': scan_data['timestamp'],
             'deep_scan': deep_scan
         }
