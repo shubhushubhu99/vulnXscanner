@@ -18,6 +18,7 @@
                 <th>IP Address</th>
                 <th>Ports Found</th>
                 <th>Type</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -28,6 +29,11 @@
                 <td>{{ item.ip }}</td>
                 <td><span class="badge">{{ item.ports_found }} open</span></td>
                 <td>{{ 'Deep' if item.deep_scan else 'Common' }}</td>
+                <td>
+                    <a href="/export/{{ item.id }}" class="btn-download">
+                        📄 Download Report
+                    </a>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
@@ -80,6 +86,23 @@
         border-radius: 6px;
         font-size: 0.85rem;
         font-weight: 600;
+    }
+
+    .btn-download {
+        background: #232833;
+        color: var(--text-primary);
+        text-decoration: none;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        border: 1px solid var(--border);
+        transition: 0.2s;
+    }
+
+    .btn-download:hover {
+        background: var(--accent);
+        color: black;
+        border-color: var(--accent);
     }
 </style>
 {% endblock %}
