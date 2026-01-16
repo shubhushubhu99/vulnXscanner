@@ -1,260 +1,212 @@
-# 🌐 VulnX Security Scanner  
+<div align="center">
 
-### **Real-time Port Analysis • Service Fingerprinting • Live Threat Intelligence**  
+# 🌐 VulnX Security Scanner
+
+### **Real-time Port Analysis • Service Fingerprinting • Live Threat Intelligence**
 
 A high-performance Python + Flask based security scanner that performs real-time port scanning, banner grabbing, severity scoring, threat mapping, and subdomain enumeration — all via a modern dark dashboard UI.
 
-[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)]()  
-[![Flask](https://img.shields.io/badge/Flask-Backend-black.svg)]()  
-[![Security](https://img.shields.io/badge/Security-Scanning-red.svg)]()  
-[![Status](https://img.shields.io/badge/Project-Live-brightgreen.svg)]()  
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)]()  
+[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-Backend-black.svg)](https://flask.palletsprojects.com/)
+[![Security](https://img.shields.io/badge/Security-Scanning-red.svg)](https://github.com/shubhushubhu99/vulnXscanner)
+[![Status](https://img.shields.io/badge/Project-Live-brightgreen.svg)](https://vulnx-scanner-production.up.railway.app/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+### 🌎 [Live Demo](https://vulnx-scanner-production.up.railway.app/)
+
+</div>
 
 ---
 
-## 🌎 Live Demo  
-### 👉 **https://vulnx-scanner-production.up.railway.app/**  
+## 🚀 About VulnX
+
+VulnX Scanner is a professional-grade **cybersecurity auditing tool** built using **Python + Flask**. It performs:
+
+- ✔ Port scanning
+- ✔ Banner grabbing
+- ✔ Service detection
+- ✔ Severity scoring
+- ✔ Threat assessment
+- ✔ AI-based analysis
+- ✔ Subdomain enumeration
+- ✔ Fully responsive UI
+
+**Designed for:** Security analysts, penetration testers, red teams, researchers, and students.
 
 ---
 
-## 📸 Preview Screenshots  
+## ⚙️ Features
 
-### 🖥 Dashboard  
-![Dashboard Screenshot](https://github.com/shubhushubhu99/vulnXscanner/blob/main/Screenshot_2025-12-23_00_20_23.png)
+### ⚡ High-speed Port Scan Engine
+- Multi-threaded scanning
+- Deep scan up to 1024 ports
+- Common scan mode
 
-### 📋 Scan Results  
-![Scan Results Screenshot](https://github.com/shubhushubhu99/vulnXscanner/blob/main/Screenshot_2025-12-23_00_20_53.png)
+### 🔍 Fingerprinting Engine
+- Banner capture
+- Web protocol detection
+- Threat intelligence mapping
 
----
+### 🤖 AI Model Analysis
+- Attack vectors identification
+- Security recommendations
+- Exploit scenarios
+- Severity scoring
 
----
+### 🌐 Subdomain Finder
+- DNS-based resolver
+- Smart default list
 
-# 🚀 About VulnX  
-
-VulnX Scanner is a professional-grade **cybersecurity auditing tool** built using **Python + Flask**. It performs:  
-
-✔ Port scanning  
-✔ Banner grabbing  
-✔ Service detection  
-✔ Severity scoring  
-✔ Threat assessment  
-✔ AI-based analysis  
-✔ Subdomain enumeration  
-✔ Fully responsive UI  
-
-Designed for security analysts, penetration testers, red teams, researchers, and students.  
-
----
-
-# ⚙️ Features  
-
-### ⚡ High-speed port scan engine  
-- Multi-threaded  
-- Deep scan up to 1024 ports  
-- Common scan mode  
-
-### 🔍 Fingerprinting engine  
-- Banner capture  
-- Web protocol detection  
-- Threat intelligence mapping  
-
-### 🤖 AI modal analysis  
-- Attack vectors  
-- Recommendations  
-- Exploit scenarios  
-- Severity scoring  
-
-### 🌐 Subdomain finder  
-- DNS-based resolver  
-- Smart default list  
-
-### 🎨 UI / UX  
-- Dark theme  
-- Modern cards  
-- Terminal logs  
-- Responsive layout  
+### 🎨 UI / UX
+- Dark theme design
+- Modern card layout
+- Terminal logs display
+- Fully responsive layout
 
 ---
 
-## 📂 Tech Stack  
+## 📂 Tech Stack
 
-- Python  
-- Flask  
-- Socket networking  
-- Multithreading  
-- HTML / CSS / JavaScript  
-- Jinja2 templating  
+| Technology | Purpose |
+|------------|---------|
+| Python 3.9+ | Backend language |
+| Flask | Web framework |
+| Socket | Network communication |
+| Multithreading | Concurrent scanning |
+| HTML/CSS/JavaScript | Frontend |
+| Jinja2 | Template engine |
+
 ---
 
-# 📥 Installation  
+## 📥 Installation
 
-### 1️⃣ Clone the repo  
+### 1️⃣ Clone the Repository
 ```bash
 git clone https://github.com/shubhushubhu99/vulnxscanner.git
+cd vulnxscanner
 ```
 
----
-
-## ⚙️ Installation
-
-### 2️⃣ Install dependencies
+### 2️⃣ Install Dependencies
 ```bash
-pip install flask
+pip install -r requirements.txt
 ```
-### 3️⃣ Run the application
+
+### 3️⃣ Run the Application
 ```bash
-python app.py
+python src/app.py
 ```
-### 4️⃣ Open in browser
-```bash
+
+### 4️⃣ Open in Browser
+Navigate to:
+```
 http://127.0.0.1:5000
 ```
 
-# 🤝 Contributing to VulnX Security Scanner
-
-First of all, thank you for your interest in contributing to **VulnX Security Scanner**!  
-Every contribution — whether code, documentation, design, or ideas — is highly appreciated.
-
 ---
-
-## 🧠 Project Ownership & Credits
-
-### 👤 Project Author
-**Team SilentXploit**
-  
-## Lead Developer & Maintainer:  
-**Shubham Yadav**
-
----
-
-### 👥 Core Development Team
-We proudly acknowledge the individuals who contributed significantly to the development of VulnX:
-
-- **Md Farhan** 
-- **Uday shankar singh** 
-
----
-
-
-## 🚀 How to Contribute
-
-You can contribute in many ways:
-
-### 🔧 Code Contributions
-- Add new features or modules  
-- Improve performance or scanning accuracy  
-- Refactor or optimize existing code  
-- Fix bugs and issues  
 
 ## 📚 Documentation
 
-- [Project Overview](docs/overview.md)
-- [Project Architecture](docs/architecture.md)
- 
-
-### 🎨 UI / UX
-- Improve responsiveness  
-- Enhance visuals or accessibility  
-- Add animations or better layouts  
-
-### 🛡 Security Research
-- Add new port signatures  
-- Improve threat intelligence  
-- Suggest mitigation techniques  
+- 📖 [Project Overview](docs/overview.md)
+- 🏗️ [Project Architecture](docs/architecture.md)
 
 ---
 
-## 🧩 Contribution Workflow
-
-1. **Fork the repository**  
-2. **Create a new branch**
-
-   ```bash
-   git checkout -b feature/your-feature-name
-
-    Make your changes
-
-    Commit clearly
-
-3. **git commit -m "Add: meaningful description"**
-
-4. **Push your branch**
-
-  ```bash
-git push origin feature/your-feature-name
-```
-
-5. **Open a Pull Request**
-
-## 📝 Contribution Guidelines
-
-1. **Follow clean coding standards**
-
-2. **Write readable, maintainable code**
-
-3. **Keep commits focused and meaningful**
-
-4. **Do not introduce breaking changes without discussion**
-
-5. **Ensure no malicious or unethical functionality is added**
-
-# ⚠️ Ethical Use Policy
-
-- All contributions must comply with ethical hacking principles.
-
-- Features that promote illegal, abusive, or unauthorized exploitation will be rejected.
-
-# 🙌 Recognition
-
-### All contributors will be:
-
-- Listed in this file
-
-- Credited in release notes
-
-- Acknowledged in project documentation
-
-**Your work will always be respected and credited.**
-
-## 📬 Questions or Suggestions?
-
-**If you have ideas or questions:**
-
-  - Open an issue
-
-  - Start a discussion
-
-  - Reach out through pull requests
-
-
-
-- ### Live Deployment 
-```bash 
-👉 https://vulnx-scanner-production.up.railway.app/  
-```
 ## 📁 Project Structure
 
 ```text
-project-root/
+vulnXscanner/
 │
 ├── src/
-│   └── app.py
+│   ├── app.py
+│   └── core/
+│       └── scanner.py
 │
-├── images/
-│   ├── Screenshot_2025-12-23_00_20_23.png
-│   ├── Screenshot_2025-12-23_00_20_30.png
-│   └── Screenshot_2025-12-23_00_20_53.png
+├── static/
+│   ├── css/
+│   │   └── main.css
+│   └── js/
+│       ├── main.js
+│       └── scanner.js
 │
-├── config/
-│   ├── Procfile
-│   ├── vercel.json
-│   └── .runtime.txt
+├── templates/
+│   ├── base.html
+│   ├── dashboard.html
+│   ├── history.html
+│   └── subdomain.html
 │
+├── docs/
+│   ├── overview.md
+│   └── architecture.md
+│
+├── Config/
+│   └── Procfile
+│
+├── Images/
 ├── Dockerfile
 ├── requirements.txt
-├── .gitignore
-├── README.md
+├── CODE_OF_CONDUCT.md
+└── README.md
+```
 
-**⭐ If you like this project, please give it a star on GitHub! ⭐**
+---
 
 
+<div align="center">
+
+### 👤 Project Author
+**Team SilentXploit**
+
+### 💻 Lead Developer & Maintainer
+**Shubham Yadav**
+
+### 👥 Core Development Team
+**Md Farhan** • **Uday Shankar Singh**
+
+</div>
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions from the community! Please read our [Contributing Guidelines](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md) before submitting pull requests.
+
+For detailed contribution instructions, see [CONTRIBUTING.md](CONTRIBUTING.md)
+
+---
+
+## ⚠️ Ethical Use Policy
+
+**VulnX Scanner** is designed for **authorized security testing only**. Users must:
+
+- ✅ Obtain proper authorization before scanning any network
+- ✅ Comply with all applicable laws and regulations
+- ✅ Use the tool for legitimate security research and testing
+- ❌ Never use for unauthorized access or malicious purposes
+
+**Disclaimer:** The authors are not responsible for misuse of this tool.
+
+---
+
+## 📜 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 📬 Contact & Support
+
+- 🐛 [Report Issues](https://github.com/shubhushubhu99/vulnXscanner/issues)
+- 💡 [Request Features](https://github.com/shubhushubhu99/vulnXscanner/issues/new)
+- 📧 Contact: [Open an Issue](https://github.com/shubhushubhu99/vulnXscanner/issues)
+
+---
+
+<div align="center">
+
+### ⭐ If you like this project, please give it a star on GitHub! ⭐
+
+**Made with ❤️ by Team SilentXploit**
+
+[Live Demo](https://vulnx-scanner-production.up.railway.app/) • [Documentation](docs/overview.md) • [Report Bug](https://github.com/shubhushubhu99/vulnXscanner/issues)
+
+</div>
