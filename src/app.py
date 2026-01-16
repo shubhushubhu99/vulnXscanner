@@ -43,6 +43,10 @@ latest_results = {
 }
 
 @app.route('/', methods=['GET'])
+def landing():
+    return render_template('landing.html')
+
+@app.route('/dashboard', methods=['GET'])
 def index():
     return render_template(
         'dashboard.html',
