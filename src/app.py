@@ -6,13 +6,19 @@ from core.scanner import resolve_target, scan_target, check_subdomain
 from core.reporter import generate_pdf_report
 import json
 import os
+import secrets
 import uuid
 from flask import send_file
 
 app = Flask(__name__, 
     template_folder='../templates',
     static_folder='../static')
-app.config['SECRET_KEY'] = 'vulnx_secret_key_123'
+# Prefer env-provided secret key; generate a per-process fallback if missing
+app.config['SECRET_KEY'] = (
+    os.environ.get('FLASK_SECRET_KEY')
+    or os.environ.get('SECRET_KEY')
+    or secrets.token_hex(32)
+)
 # Use threading mode for broad compatibility
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 

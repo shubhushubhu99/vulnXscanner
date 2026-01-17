@@ -91,12 +91,25 @@ cd vulnxscanner
 pip install -r requirements.txt
 ```
 
-### 3️⃣ Run the Application
+### 3️⃣ Configure Environment Variables
+Set a strong secret key before starting the app:
+
+**macOS/Linux**
+```bash
+export FLASK_SECRET_KEY="change_me_to_a_long_random_value"
+```
+
+**Windows (PowerShell)**
+```powershell
+$Env:FLASK_SECRET_KEY="change_me_to_a_long_random_value"
+```
+
+### 4️⃣ Run the Application
 ```bash
 python src/app.py
 ```
 
-### 4️⃣ Open in Browser
+### 5️⃣ Open in Browser
 Navigate to:
 ```
 http://127.0.0.1:5000
