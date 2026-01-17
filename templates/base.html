@@ -18,8 +18,8 @@
         <div></div>
     </div>
     <div class="sidebar">
-        <div class="logo"><span>◈</span> VulnX</div>
-        <a href="/" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">Dashboard</a>
+        <div class="logo"><a href="{{ url_for('landing') }}" style="text-decoration: none; color: inherit;"><span>◈</span> VulnX</a></div>
+        <a href="{{ url_for('index') }}" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">Dashboard</a>
         <a href="/history" class="nav-item {% if active_page == 'history' %}active{% endif %}">Scan History</a>
         <a href="#" class="nav-item">Vulnerability Database</a>
         <a href="/subdomain" class="nav-item {% if active_page == 'subdomain' %}active{% endif %}">Subdomain Finder</a>
@@ -28,7 +28,7 @@
     <div class="content">
         {% block content %}{% endblock %}
         <footer>
-            VulnX Security Engine • Enterprise Version 2.0 • 2025
+            VulnX Security Engine • Enterprise Version 2.0 • {{ current_year }}
         </footer>
     </div>
 
