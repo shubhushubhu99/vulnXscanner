@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VulnX | Contact Us</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/contact.css') }}">
+</head>
+
+<body>
+    <!-- Background Effects -->
+    <div class="bg-grid"></div>
+    <div class="glow glow-1"></div>
+    <div class="glow glow-2"></div>
+    <div class="glow glow-3"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo"><span>◈</span> VulnX</a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/#about">About</a>
+                <a href="/#features">Features</a>
+                <a href="/#how-it-works">How It Works</a>
+                <a href="/#team">Team</a>
+                <a href="{{ url_for('contact') }}" class="active">Contact Us</a>
+                <a href="/dashboard" class="nav-cta">Launch Scanner</a>
+            </div>
+            <button class="menu-toggle" aria-label="Toggle Menu">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu">
+        <div class="mobile-links">
+            <a href="/">Home</a>
+            <a href="/#about" onclick="toggleMenu()">About</a>
+            <a href="/#features" onclick="toggleMenu()">Features</a>
+            <a href="/#how-it-works" onclick="toggleMenu()">How It Works</a>
+            <a href="/#team" onclick="toggleMenu()">Team</a>
+            <a href="{{ url_for('contact') }}" class="active">Contact Us</a>
+            <a href="/dashboard" class="nav-cta">Launch Scanner</a>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="contact-hero">
+        <div class="hero-badge">📬 Get In Touch</div>
+        <h1>Let's <span class="gradient-text">Connect</span></h1>
+        <p>Have a question about VulnX? Want to report a security issue? We're here to help.</p>
+    </section>
+
+    <!-- Main Content -->
+    <section class="section contact-section">
+        <div class="contact-wrapper">
+            <!-- Contact Info Cards -->
+            <div class="contact-info">
+                <div class="info-card">
+                    <div class="info-icon">📧</div>
+                    <h3>Email Us</h3>
+                    <p>For general inquiries and support</p>
+
+                </div>
+                <div class="info-card">
+                    <div class="info-icon">🔒</div>
+                    <h3>Security Reports</h3>
+                    <p>Report vulnerabilities responsibly</p>
+
+                </div>
+                <div class="info-card">
+                    <div class="info-icon">💬</div>
+                    <h3>Community</h3>
+                    <p>Join our community</p>
+                </div>
+                <div class="info-card">
+                    <div class="info-icon">🐙</div>
+                    <h3>Open Source</h3>
+                    <p>Contribute on GitHub</p>
+                    <a href="https://github.com/shubhushubhu99/vulnXscanner" class="info-link" target="_blank">View
+                        Repository</a>
+                </div>
+            </div>
+
+            <!-- Contact Form -->
+            <div class="contact-container">
+                <div class="contact-header">
+                    <h2>Send us a Message</h2>
+                    <p>Fill out the form and we'll get back to you within 24 hours.</p>
+                </div>
+
+                {% if success %}
+                <div class="alert alert-success">
+                    <span class="alert-icon">✅</span>
+                    {{ success }}
+                </div>
+                {% endif %}
+
+                {% if error %}
+                <div class="alert alert-error">
+                    <span class="alert-icon">❌</span>
+                    {{ error }}
+                </div>
+                {% endif %}
+
+                <form method="POST" action="{{ url_for('contact') }}" class="contact-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name">Full Name</label>
+                            <input type="text" id="name" name="name" placeholder="John Doe" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" placeholder="john@example.com" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="subject">Subject</label>
+                        <input type="text" id="subject" name="subject" placeholder="How can we help you?" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="message">Your Message</label>
+                        <textarea id="message" name="message" placeholder="Tell us more about your inquiry..."
+                            required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-submit">
+                        <span>Send Message</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo"><span>◈</span> VulnX</div>
+            <p>VulnX Security Engine • Enterprise Version 2.0 • © <span id="current-year"></span></p>
+            <div class="footer-links">
+                <a href="https://github.com/shubhushubhu99/vulnXscanner" target="_blank">GitHub</a>
+                <a href="/dashboard">Dashboard</a>
+                <a href="{{ url_for('contact') }}">Contact Us</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+
+        const menuToggle = document.querySelector('.menu-toggle');
+        const mobileMenu = document.querySelector('.mobile-menu');
+
+        function toggleMenu() {
+            menuToggle.classList.toggle('active');
+            mobileMenu.classList.toggle('active');
+            document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : 'auto';
+        }
+
+        menuToggle.addEventListener('click', toggleMenu);
+    </script>
+</body>
+
+</html>
