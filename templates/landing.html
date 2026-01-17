@@ -26,6 +26,7 @@
                 <a href="#features">Features</a>
                 <a href="#how-it-works">How It Works</a>
                 <a href="#team">Team</a>
+                <a href="{{ url_for('contact') }}">Contact Us</a>
                 <a href="/dashboard" class="nav-cta">Launch Scanner</a>
             </div>
             <button class="menu-toggle" aria-label="Toggle Menu">
@@ -44,6 +45,7 @@
             <a href="#features" onclick="toggleMenu()">Features</a>
             <a href="#how-it-works" onclick="toggleMenu()">How It Works</a>
             <a href="#team" onclick="toggleMenu()">Team</a>
+            <a href="{{ url_for('contact') }}">Contact Us</a>
             <a href="/dashboard" class="nav-cta">Launch Scanner</a>
         </div>
     </div>
@@ -249,6 +251,7 @@
             <div class="footer-links">
                 <a href="https://github.com/shubhushubhu99/vulnXscanner" target="_blank">GitHub</a>
                 <a href="/dashboard">Dashboard</a>
+                <a href="{{ url_for('contact') }}">Contact Us</a>
             </div>
         </div>
     </footer>
