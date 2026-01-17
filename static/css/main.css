@@ -937,3 +937,95 @@ footer {
     0%, 100% { opacity: 0.6; }
     50% { opacity: 1; }
 }
+/* ==============================
+   VulnX Footer – Final Version
+   ============================== */
+
+.site-footer {
+    background: linear-gradient(
+        to top,
+        rgba(6, 10, 14, 0.96),
+        rgba(6, 10, 14, 0.88)
+    );
+    color: #9ca3af;
+    padding: 44px 24px 24px;
+    margin-top: 90px;
+    font-family: "Inter", system-ui, sans-serif;
+}
+
+/* Footer layout */
+.footer-container {
+    max-width: 1080px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 56px;
+    align-items: start;
+}
+
+/* Brand */
+.footer-brand {
+    text-align: center;
+    justify-self: center;
+}
+
+.footer-brand h3 {
+    font-size: 26px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    color: #10b981;
+}
+
+.footer-brand p {
+    font-size: 16.5px;
+    line-height: 1.75;
+    max-width: 380px;
+    margin: 0 auto;
+    color: #7b8593;
+}
+
+/* Section headings */
+.footer-links h4 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #e5e7eb;
+}
+
+/* Footer links */
+.footer-links a {
+    display: block;
+    font-size: 16px;
+    color: #9ca3af;
+    text-decoration: none;
+    margin-bottom: 12px;
+    line-height: 1.65;
+    transition: color 0.15s ease;
+}
+
+.footer-links a:hover {
+    color: #10b981;
+}
+
+/* Bottom bar */
+.footer-bottom {
+    margin-top: 36px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    text-align: center;
+    font-size: 14.5px;
+    color: #6b7280;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .footer-container {
+        grid-template-columns: 1fr;
+        gap: 32px;
+        text-align: center;
+    }
+
+    .footer-links a {
+        margin-bottom: 10px;
+    }
+}
