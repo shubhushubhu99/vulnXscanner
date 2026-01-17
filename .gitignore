@@ -1,1 +1,12 @@
 .vercel
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+venv/
+env/
+scan_history.json
+.vscode/
+.idea/__pycache__/
+*.pyc
+.DS_Store

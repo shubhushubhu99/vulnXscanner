@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Subdomain Finder | VulnX{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>🔍 Subdomain Finder</h1>
+    <p>Discover valid subdomains associated with any hostname</p>
+</div>
+
+<div class="search-container">
+    <form method="post" onsubmit="showSubdomainLoading()">
+        <div class="input-group">
+            <input type="text" name="domain" placeholder="example.com" required>
+            <button type="submit" id="subdomainBtn" class="btn-primary">
+                Find Subdomains
+            </button>
+        </div>
+    </form>
+    {% if subdomains %}
+    <div class="result-box">
+        {% for sub in subdomains %}
+        <div class="result-item">✔ {{ sub }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if message %}
+    <div class="result-box message-box">{{ message }}</div>
+    {% endif %}
+</div>
+
+<style>
+    .result-box {
+        background: rgba(1, 4, 9, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 24px;
+        border-radius: 16px;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        margin-top: 32px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.95rem;
+        line-height: 1.8;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(16, 185, 129, 0.1),
+            0 0 40px rgba(16, 185, 129, 0.1);
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    .result-item {
+        padding: 8px 0;
+        color: var(--accent);
+        border-bottom: 1px solid rgba(16, 185, 129, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .result-item:last-child {
+        border-bottom: none;
+    }
+
+    .result-item:hover {
+        transform: translateX(4px);
+        color: var(--accent-hover);
+    }
+
+    .message-box {
+        color: var(--text-secondary);
+        text-align: center;
+    }
+</style>
+
+<script>
+    function showSubdomainLoading() {
+        const btn = document.getElementById("subdomainBtn");
+        btn.disabled = true;
+        btn.innerText = "Finding...";
+        btn.style.opacity = "0.6";
+        btn.style.cursor = "not-allowed";
+    }
+</script>
+{% endblock %}

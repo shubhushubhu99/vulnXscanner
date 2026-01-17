@@ -1,82 +1,63 @@
-from flask import Flask, render_template_string, request
-import socket
-import threading
-import queue
 from datetime import datetime
+import importlib.util
+from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask_socketio import SocketIO, emit
+from core.scanner import resolve_target, scan_target, check_subdomain
+from core.reporter import generate_pdf_report
+import json
+import os
+import secrets
+import uuid
+from flask import send_file
+
+# Load environment variables (GEMINI_API_KEY should be in .env)
+load_dotenv()
+
+# Configure the Gemini SDK correctly (global configuration)
 
 app = Flask(__name__)
 
-# --- Logic (Same as before) ---
-common_ports = [21, 22, 23, 25, 53, 80, 110, 135, 137, 138, 139, 143, 161, 389, 443, 445, 3306, 3389, 5432, 5900, 8080, 8443, 9200]
-port_services = {
-    21: "FTP", 22: "SSH", 23: "Telnet", 25: "SMTP", 53: "DNS",
-    80: "HTTP", 110: "POP3", 135: "MS RPC", 137: "NetBIOS", 138: "NetBIOS",
-    139: "NetBIOS/SMB", 143: "IMAP", 161: "SNMP", 389: "LDAP",
-    443: "HTTPS", 445: "SMB", 3306: "MySQL", 3389: "RDP",
-    5432: "PostgreSQL", 5900: "VNC", 8080: "HTTP Alternate", 8443: "HTTPS Alternate",
-    9200: "Elasticsearch"
-}
-port_threats = {
-    22: "SSH: Brute-force risk. Use key-auth and Fail2Ban.",
-    80: "HTTP: Unencrypted. Use HSTS and redirect to 443.",
-    443: "HTTPS: Check for weak TLS 1.0/1.1 protocols.",
-    3389: "RDP: High Ransomware risk. Use VPN/Gateway.",
-    445: "SMB: EternalBlue target. Firewall port 445.",
-    21: "FTP: Cleartext creds. Use SFTP (Port 22).",
-    23: "Telnet: Highly insecure. Replace with SSH.",
-}
-severity_map = {23: "Critical", 21: "High", 445: "High", 3389: "High", 22: "Medium", 80: "Medium", 443: "Low", 3306:"Critical"}
+# Global Gemini client (created once)
+api_key = os.getenv("GEMINI_API_KEY")
 
-def grab_banner(ip, port):
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(2)
-        sock.connect((ip, port))
-        banner = ""
+if not api_key:
+    raise ValueError("GEMINI_API_KEY not found in environment variables")
+
+client = genai.Client(api_key=api_key)
+app = Flask(__name__, 
+    template_folder='../templates',
+    static_folder='../static')
+# Prefer env-provided secret key; generate a per-process fallback if missing
+app.config['SECRET_KEY'] = (
+    os.environ.get('FLASK_SECRET_KEY')
+    or os.environ.get('SECRET_KEY')
+    or secrets.token_hex(32)
+)
+# Use threading mode for broad compatibility
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+
+# Ensure absolute path for history file
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Let's put it in the root (one level up from src)
+HISTORY_FILE = os.path.join(os.path.dirname(BASE_DIR), "scan_history.json")
+
+
+@app.context_processor
+def inject_current_year():
+    return {"current_year": datetime.now().year}
+
+def load_history():
+    if os.path.exists(HISTORY_FILE):
         try:
-            data = sock.recv(1024)
-            if data: banner += data.decode('utf-8', errors='ignore').strip()
-        except: pass
-        if port in [80, 443, 8080, 8443]:
-            try:
-                sock.send(b"GET / HTTP/1.1\r\nHost: " + ip.encode() + b"\r\n\r\n")
-                response = sock.recv(1024)
-                if response:
-                    decoded = response.decode('utf-8', errors='ignore').split('\r\n')[0]
-                    banner += f" ({decoded})"
-            except: pass
-        sock.close()
-        return banner[:100] if banner else "No banner response"
-    except: return "No banner response"
+            with open(HISTORY_FILE, 'r') as f:
+                data = json.load(f)
+                return data if isinstance(data, list) else []
+        except Exception as e:
+            print(f"Error loading history: {e}")
+            return []
+    return []
 
-def scan_target(target_ip, deep_scan):
-    ports = list(range(1, 1025)) if deep_scan else common_ports
-    results = []
-    q = queue.Queue()
-    for port in ports: q.put(port)
-    def worker():
-        while not q.empty():
-            port = q.get()
-            try:
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(1)
-                if sock.connect_ex((target_ip, port)) == 0:
-                    service = port_services.get(port, "Unknown")
-                    banner = grab_banner(target_ip, port)
-                    severity = severity_map.get(port, "Low")
-                    threat = port_threats.get(port, "General exposure risk detected.")
-                    results.append((port, service, banner, severity, threat))
-                sock.close()
-            except: pass
-            q.task_done()
-    for _ in range(100):
-        t = threading.Thread(target=worker, daemon=True)
-        t.start()
-    q.join()
-    return sorted(results, key=lambda x: x[0])
-
-def resolve_target(target):
-    target = target.strip().replace("http://", "").replace("https://", "").split("/")[0]
+def save_history(history):
     try:
         ip = socket.gethostbyname(target)
         return ip, target
@@ -499,102 +480,56 @@ HTML_TEMPLATE = """
 </body>
 </html>
 """
+        with open(HISTORY_FILE, 'w') as f:
+            json.dump(history, f, indent=4)
+        print(f"File saved: {HISTORY_FILE}")
+    except Exception as e:
+        print(f"Error saving history: {e}")
 
-SUBDOMAIN_TEMPLATE = '''
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Subdomain Finder - VulnX</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { background: #0a0c10; font-family: Inter; color: white; }
-        .container { max-width: 750px; margin: 50px auto; background:#12151c; padding:30px; border-radius:12px; }
-        input[type=text]{width:100%;padding:13px;border-radius:8px;border:1px solid #232833;background:#0d1117;color:white;}
-        button{margin-top:20px;width:100%;background:#10b981;color:black;padding:14px;border-radius:8px;border:none;font-weight:600;cursor:pointer;}
-        .result-box{background:#010409;padding:15px;border-radius:8px;border:1px solid #232833;margin-top:20px;font-family:monospace;}
-        a{color:#10b981;text-decoration:none;}
-    </style>
-</head>
-<body>
-    <div style="padding:20px">
-        <a href="/">← Back to Dashboard</a>
-    </div>
-    <div class="container">
-        <h2>🔍 Subdomain Finder</h2>
-        <p>Find valid subdomains associated with any hostname</p>
-        <form method="post">
-            <input type="text" name="domain" placeholder="example.com" required>
-            <button type="submit">Find Subdomains</button>
-        </form>
-        {% if subdomains %}
-        <div class="result-box">
-            {% for sub in subdomains %}
-                <div>✔ {{ sub }}</div>
-            {% endfor %}
-        </div>
-        {% endif %}
-        {% if message %}
-        <div class="result-box">{{ message }}</div>
-        {% endif %}
-    </div>
-</body>
-</html>
-'''
+# Global storage for state
+latest_results = {
+    'results': None,
+    'target': '',
+    'deep_scan': False
+}
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET'])
+def landing():
+    return render_template('landing.html')
+
+@app.route('/dashboard', methods=['GET'])
 def index():
-    results = None
-    original_target = ""
-    resolved_ip = None
-    deep_scan = False
-    log_lines = []
+    return render_template(
+        'dashboard.html',
+        results=latest_results['results'],
+        original_target=latest_results['target'],
+        deep_scan=latest_results['deep_scan'],
+        active_page='dashboard'
+    )
 
-    if request.method == 'POST':
-        original_target = request.form['target'].strip()
-        deep_scan = 'deep' in request.form
-        resolved_ip, _ = resolve_target(original_target)
-        log_lines = [
-            f"Initializing scan for {original_target}...",
-            f"Target resolved to {resolved_ip}" if resolved_ip else "DNS resolution failed."
-        ]
-        if resolved_ip:
-            log_lines.append(f"Scanning {'1024 ports' if deep_scan else 'top common ports'}...")
-            results = scan_target(resolved_ip, deep_scan)
-            log_lines.append(f"Scan complete. {len(results)} open ports identified.")
-        else:
-            results = []
-            log_lines.append("Scan aborted due to resolution failure.")
-
-    return render_template_string(
-        HTML_TEMPLATE,
-        results=results,
-        original_target=original_target if request.method == 'POST' else "",
-        resolved_ip=resolved_ip,
-        deep_scan=deep_scan,
-        log_lines=log_lines
+@app.route('/history', methods=['GET'])
+def history_page():
+    history = load_history()
+    print(f"Loading history page. Found {len(history)} items.")
+    return render_template(
+        'history.html',
+        history=history,
+        active_page='history'
     )
 
 @app.route('/clear', methods=['POST'])
 def clear():
-    return index()
-
-def check_subdomain(domain, sub):
-    try:
-        socket.gethostbyname(f"{sub}.{domain}")
-        return True
-    except:
-        return False
+    global latest_results
+    latest_results = {'results': None, 'target': '', 'deep_scan': False}
+    # Also clear history file for fresh start if requested? No, usually clear just UI.
+    return redirect(url_for('index'))
+    #return jsonify({'status': 'cleared'})  Earlier return statement commented out
 
 @app.route('/subdomain', methods=['GET', 'POST'])
 def subdomain_page():
     subdomains = []
     message = ""
-    default_list = [
-        "www", "mail", "ftp", "dev", "test", "cpanel",
-        "api", "blog", "shop", "admin", "beta", "stage"
-    ]
+    default_list = ["www", "mail", "ftp", "dev", "test", "cpanel", "api", "blog", "shop", "admin", "beta", "stage"]
     if request.method == "POST":
         domain = request.form.get("domain").strip()
         if domain:
@@ -604,13 +539,88 @@ def subdomain_page():
                     subdomains.append(full)
             if not subdomains:
                 message = "❌ No subdomains detected"
-    return render_template_string(
-        SUBDOMAIN_TEMPLATE,
-        subdomains=subdomains,
-        message=message
+    
+    return render_template('subdomain.html', subdomains=subdomains, message=message, active_page='subdomain')
+
+@app.route('/export/<scan_id>', methods=['GET'])
+def export_report(scan_id):
+    history = load_history()
+    scan_data = next((item for item in history if item.get('id') == scan_id), None)
+    
+    if not scan_data:
+        return "Scan not found", 404
+        
+    pdf_buffer = generate_pdf_report(scan_data)
+    
+    return send_file(
+        pdf_buffer,
+        as_attachment=True,
+        download_name=f"vulnx_report_{scan_data.get('target', 'unknown')}_{scan_data.get('timestamp')}.pdf",
+        mimetype='application/pdf'
     )
 
+# WebSocket Events
+@socketio.on('start_scan')
+def handle_scan(data):
+    target = data.get('target')
+    deep_scan = data.get('deep_scan', False)
+    
+    # Run scan in a background task to avoid blocking the socket handler
+    socketio.start_background_task(run_scan_task, target, deep_scan)
+
+def run_scan_task(target, deep_scan):
+    print(f"Starting background scan for: {target}")
+    socketio.emit('scan_log', {'message': f"Resolving target {target}..."})
+    
+    ip, resolved_host = resolve_target(target)
+    
+    if not ip:
+        socketio.emit('scan_log', {'message': "❌ DNS resolution failed. Aborting."})
+        socketio.emit('scan_complete', {'total_open': 0, 'results': []})
+        return
+
+    socketio.emit('scan_log', {'message': f"Target resolved to {ip}. Initializing scanning engine..."})
+    
+    def scan_callback(event, data):
+        socketio.emit(event, data)
+
+    try:
+        scan_data = scan_target(ip, deep_scan, callback=scan_callback)
+        
+        # Store results
+        res_list = scan_data['ports']
+        latest_results['results'] = res_list
+        latest_results['target'] = target
+        latest_results['deep_scan'] = deep_scan
+        
+        history_item = {
+            'id': str(uuid.uuid4()),
+            'target': target,
+            'ip': ip,
+            'ports_found': len(res_list),
+            'results': res_list, # Need to save full results for the report!
+            'timestamp': scan_data['timestamp'],
+            'deep_scan': deep_scan
+        }
+        
+        # Persistent saving
+        current_history = load_history()
+        current_history.insert(0, history_item)
+        save_history(current_history[:50])
+        
+        print(f"✅ Scan completed for {target}. Total ports: {len(res_list)}")
+        
+        socketio.emit('scan_complete', {
+            'total_open': len(res_list),
+            'results': res_list
+        })
+    except Exception as e:
+        print(f"Error during scan: {e}")
+        socketio.emit('scan_log', {'message': f"❌ Error: {str(e)}"})
+        socketio.emit('scan_complete', {'total_open': 0, 'results': []})
+
 if __name__ == '__main__':
-    print("VulnX is starting...")
-    print("Open your browser: http://127.0.0.1:5000")
-    app.run(host='127.0.0.1', port=5000, debug=True)
+    print("🚀 VulnX Professional Edition starting...")
+    print(f"📍 History file location: {HISTORY_FILE}")
+    print("📍 URL: http://127.0.0.1:5000")
+    socketio.run(app, host='127.0.0.1', port=5000, debug=True, allow_unsafe_werkzeug=True)

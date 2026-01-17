@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VulnX | Advanced Security Scanner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+</head>
+
+<body>
+    <!-- Background Effects -->
+    <div class="bg-grid"></div>
+    <div class="glow glow-1"></div>
+    <div class="glow glow-2"></div>
+    <div class="glow glow-3"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo"><span>◈</span> VulnX</a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="#about">About</a>
+                <a href="#features">Features</a>
+                <a href="#how-it-works">How It Works</a>
+                <a href="#team">Team</a>
+                <a href="/dashboard" class="nav-cta">Launch Scanner</a>
+            </div>
+            <button class="menu-toggle" aria-label="Toggle Menu">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu">
+        <div class="mobile-links">
+            <a href="/">Home</a>
+            <a href="#about" onclick="toggleMenu()">About</a>
+            <a href="#features" onclick="toggleMenu()">Features</a>
+            <a href="#how-it-works" onclick="toggleMenu()">How It Works</a>
+            <a href="#team" onclick="toggleMenu()">Team</a>
+            <a href="/dashboard" class="nav-cta">Launch Scanner</a>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-text">
+            <div class="hero-badge">🛡️ Enterprise-Grade Security</div>
+            <h1>Secure Your <span class="gradient-text">Digital Frontier</span></h1>
+            <p>High-performance vulnerability scanning, real-time port analysis, and AI-driven threat intelligence.
+                Built for modern security professionals.</p>
+            <div class="hero-cta">
+                <a href="/dashboard" class="btn btn-primary">
+                    <span>Get Started Free</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                </a>
+                <a href="https://github.com/shubhushubhu99/vulnXscanner" class="btn btn-outline">View on GitHub</a>
+            </div>
+            <div class="hero-stats">
+                <div class="hero-stat"><strong>1000+</strong> Ports</div>
+                <div class="hero-stat"><strong>50+</strong> Vuln Checks</div>
+                <div class="hero-stat"><strong>99.9%</strong> Uptime</div>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <img src="{{ url_for('static', filename='images/hero.png') }}" alt="VulnX Security Visual">
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="section">
+        <div class="section-header">
+            <span class="section-tag">About VulnX</span>
+            <h2>Professional-Grade <span class="gradient-text">Security Scanning</span></h2>
+            <p>VulnX is an advanced security reconnaissance tool designed to provide deep insights into your network
+                security posture. From port discovery to AI-driven vulnerability assessments, we empower security teams
+                to stay ahead of potential threats.</p>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="section">
+        <div class="section-header">
+            <span class="section-tag">Capabilities</span>
+            <h2>Powerful <span class="gradient-text">Features</span></h2>
+        </div>
+        <div class="features-grid">
+            <div class="feature-item">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-content">
+                    <h3>Port Scanning</h3>
+                    <p>Ultra-fast multi-threaded scanner with deep inspection capabilities for over 1000 common ports.
+                    </p>
+                </div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🔍</div>
+                <div class="feature-content">
+                    <h3>Banner Grabbing</h3>
+                    <p>Extract service headers and fingerprint technologies to identify potential attack vectors.</p>
+                </div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🤖</div>
+                <div class="feature-content">
+                    <h3>AI Analysis</h3>
+                    <p>Leverage intelligent scoring and remediation advice to stay ahead of evolving threats.</p>
+                </div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🌐</div>
+                <div class="feature-content">
+                    <h3>Subdomain Finder</h3>
+                    <p>Enumerate subdomains using DNS-based resolution to map out the entire attack surface.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="section">
+        <div class="section-header">
+            <span class="section-tag">Simple Process</span>
+            <h2>How It <span class="gradient-text">Works</span></h2>
+        </div>
+        <div class="steps-flow">
+            <div class="step">
+                <div class="step-num">01</div>
+                <h4>Enter Target</h4>
+                <p>Provide a domain name or IP address you want to analyze.</p>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step">
+                <div class="step-num">02</div>
+                <h4>Initiate Scan</h4>
+                <p>Choose between quick scan or deep scan for comprehensive analysis.</p>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step">
+                <div class="step-num">03</div>
+                <h4>Review Results</h4>
+                <p>Get detailed reports with severity scores and remediation advice.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Architecture Section -->
+    <section id="architecture" class="section">
+        <div class="section-header">
+            <span class="section-tag">Under The Hood</span>
+            <h2>System <span class="gradient-text">Architecture</span></h2>
+            <p>Built with stability and performance in mind, VulnX utilizes a multi-threaded scanning engine powered by
+                Python and Flask, integrated with Socket.IO for real-time log streaming.</p>
+        </div>
+        <div class="arch-grid">
+            <div class="arch-item">
+                <h4>🐍 Python Backend</h4>
+                <p>High-performance scanning engine</p>
+            </div>
+            <div class="arch-item">
+                <h4>🌐 Flask Framework</h4>
+                <p>Lightweight and fast web server</p>
+            </div>
+            <div class="arch-item">
+                <h4>⚙️ Socket.IO</h4>
+                <p>Real-time bidirectional communication</p>
+            </div>
+            <div class="arch-item">
+                <h4>🧵 Multi-threading</h4>
+                <p>Parallel port scanning for speed</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section id="team" class="section">
+        <div class="section-header">
+            <span class="section-tag">The Creators</span>
+            <h2>Meet The <span class="gradient-text">Team</span></h2>
+        </div>
+        <div class="team-grid">
+            <div class="team-card">
+                <div class="member-badge">Lead</div>
+                <div class="member-avatar">SY</div>
+                <div class="member-info">
+                    <h3>Shubham Yadav</h3>
+                    <span class="role">Lead Developer & Maintainer</span>
+                    <p>Security Researcher and Full Stack Engineer focused on automated reconnaissance.</p>
+                    <div class="member-socials">
+                        <a href="https://github.com/shubhushubhu99" target="_blank">View GitHub</a>
+                    </div>
+                </div>
+            </div>
+            <div class="team-card">
+                <div class="member-badge">Core</div>
+                <div class="member-avatar">MF</div>
+                <div class="member-info">
+                    <h3>Md Farhan</h3>
+                    <span class="role">Security Engineer</span>
+                    <p>Specialist in vulnerability assessment and network protocol analysis.</p>
+                    <div class="member-socials">
+                        <a href="#" target="_blank">View GitHub</a>
+                    </div>
+                </div>
+            </div>
+            <div class="team-card">
+                <div class="member-badge">Core</div>
+                <div class="member-avatar">US</div>
+                <div class="member-info">
+                    <h3>Uday Shankar Singh</h3>
+                    <span class="role">Backend Developer</span>
+                    <p>Expert in scalable Python backends and high-performance scanning engines.</p>
+                    <div class="member-socials">
+                        <a href="#" target="_blank">View GitHub</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA Section -->
+    <section id="contact" class="section cta-section">
+        <h2>Ready to Secure Your Infrastructure?</h2>
+        <p>Start scanning for vulnerabilities in minutes. No registration required.</p>
+        <div class="hero-cta">
+            <a href="/dashboard" class="btn btn-primary btn-large">
+                <span>Launch Scanner Now</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+            </a>
+            <a href="https://github.com/shubhushubhu99/vulnXscanner" class="btn btn-outline">Star on GitHub ⭐</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo"><span>◈</span> VulnX</div>
+            <p>VulnX Security Engine • Enterprise Version 2.0 • © <span id="current-year"></span></p>
+            <div class="footer-links">
+                <a href="https://github.com/shubhushubhu99/vulnXscanner" target="_blank">GitHub</a>
+                <a href="/dashboard">Dashboard</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+
+        const menuToggle = document.querySelector('.menu-toggle');
+        const mobileMenu = document.querySelector('.mobile-menu');
+
+        function toggleMenu() {
+            menuToggle.classList.toggle('active');
+            mobileMenu.classList.toggle('active');
+            document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : 'auto';
+        }
+
+        menuToggle.addEventListener('click', toggleMenu);
+    </script>
+</body>
+
+</html>
