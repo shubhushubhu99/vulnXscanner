@@ -463,6 +463,7 @@ HTML_TEMPLATE = """
 
         // Create modal
         const modal = document.createElement('div');
+        modal.id = "analysisModal";
         modal.style.cssText = `
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); display: flex; align-items: center;
@@ -478,7 +479,7 @@ HTML_TEMPLATE = """
         `;
         content.innerHTML = analysis + `
             <div style="text-align:center;margin-top:25px;">
-                <button onclick="this.closest('div').parentElement.remove()"
+                <button onclick="closeAnalysis()"
                         style="padding:12px 28px; background:var(--accent); color:black; border:none; border-radius:8px; cursor:pointer; font-weight:600;">
                     Close Analysis
                 </button>
@@ -487,6 +488,12 @@ HTML_TEMPLATE = """
 
         modal.appendChild(content);
         document.body.appendChild(modal);
+    }
+    </script>
+    <script>
+    function closeAnalysis() {
+        const modal = document.getElementById("analysisModal");
+        if (modal) modal.remove();
     }
     </script>
 </body>
