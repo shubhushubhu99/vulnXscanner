@@ -28,13 +28,9 @@ app = Flask(__name__,
 api_key = os.getenv("GEMINI_API_KEY")
 
 if not api_key:
-    print("⚠️ WARNING: GEMINI_API_KEY not found. AI features will be disabled.")
-    client = None
-else:
-    client = genai.Client(api_key=api_key)
-app = Flask(__name__, 
-    template_folder='../templates',
-    static_folder='../static')
+    raise ValueError("GEMINI_API_KEY not found in environment variables")
+
+client = genai.Client(api_key=api_key)
 # Prefer env-provided secret key; generate a per-process fallback if missing
 app.config['SECRET_KEY'] = (
     os.environ.get('FLASK_SECRET_KEY')
