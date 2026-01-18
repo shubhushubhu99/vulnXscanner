@@ -4,6 +4,8 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for
 from flask_socketio import SocketIO, emit
 from core.scanner import resolve_target, scan_target, check_subdomain
 from core.reporter import generate_pdf_report
+import google.generativeai as genai
+from dotenv import load_dotenv
 import json
 import os
 import secrets
@@ -43,6 +45,7 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Let's put it in the root (one level up from src)
 HISTORY_FILE = os.path.join(os.path.dirname(BASE_DIR), "scan_history.json")
+MESSAGES_FILE = os.path.join(os.path.dirname(BASE_DIR), "messages.json")
 
 
 @app.context_processor
@@ -67,6 +70,30 @@ def save_history(history):
         print(f"File saved: {HISTORY_FILE}")
     except Exception as e:
         print(f"Error saving history: {e}")
+
+def load_messages():
+    if os.path.exists(MESSAGES_FILE):
+        try:
+            with open(MESSAGES_FILE, 'r') as f:
+                data = json.load(f)
+                return data if isinstance(data, list) else []
+        except Exception as e:
+            print(f"Error loading messages: {e}")
+            return []
+    return []
+
+def save_message(message_data):
+    try:
+        messages = load_messages()
+        message_data['id'] = str(uuid.uuid4())
+        message_data['timestamp'] = datetime.now().isoformat()
+        messages.insert(0, message_data)
+        with open(MESSAGES_FILE, 'w') as f:
+            json.dump(messages, f, indent=4)
+        return True
+    except Exception as e:
+        print(f"Error saving message: {e}")
+        return False
 
 # Global storage for state
 latest_results = {
@@ -123,6 +150,31 @@ def subdomain_page():
                 message = "❌ No subdomains detected"
     
     return render_template('subdomain.html', subdomains=subdomains, message=message, active_page='subdomain')
+
+@app.route('/contact', methods=['GET', 'POST'])
+def contact():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        email = request.form.get('email')
+        subject = request.form.get('subject')
+        message = request.form.get('message')
+
+        if not all([name, email, subject, message]):
+            return render_template('contact.html', error="All fields are required.", active_page='contact')
+
+        message_data = {
+            'name': name,
+            'email': email,
+            'subject': subject,
+            'message': message
+        }
+
+        if save_message(message_data):
+            return render_template('contact.html', success="Your message has been sent successfully!", active_page='contact')
+        else:
+            return render_template('contact.html', error="There was an error sending your message. Please try again later.", active_page='contact')
+
+    return render_template('contact.html', active_page='contact')
 
 @app.route('/export/<scan_id>', methods=['GET'])
 def export_report(scan_id):
