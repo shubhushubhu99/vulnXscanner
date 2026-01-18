@@ -18,8 +18,9 @@ from google import genai
 load_dotenv()
 
 # Configure the Gemini SDK correctly (global configuration)
-
-app = Flask(__name__)
+app = Flask(__name__, 
+    template_folder='../templates',
+    static_folder='../static')
 
 # Global Gemini client (created once)
 api_key = os.getenv("GEMINI_API_KEY")
@@ -28,13 +29,10 @@ if not api_key:
     raise ValueError("GEMINI_API_KEY not found in environment variables")
 
 client = genai.Client(api_key=api_key)
-app = Flask(__name__, 
-    template_folder='../templates',
-    static_folder='../static')
 # Prefer env-provided secret key; generate a per-process fallback if missing
 app.config['SECRET_KEY'] = (
     os.environ.get('FLASK_SECRET_KEY')
-    
+
     or os.environ.get('SECRET_KEY')
     or secrets.token_hex(32)
 )
@@ -142,6 +140,57 @@ def export_report(scan_id):
         download_name=f"vulnx_report_{scan_data.get('target', 'unknown')}_{scan_data.get('timestamp')}.pdf",
         mimetype='application/pdf'
     )
+
+@app.route('/ai_analysis', methods=['POST'])
+def ai_analysis():
+    """Generate AI-powered security analysis for a specific port using Google Gemini"""
+    try:
+        data = request.get_json()
+        port = data.get('port')
+        service = data.get('service', 'Unknown')
+        banner = data.get('banner', 'No banner')
+        severity = data.get('severity', 'Low')
+        
+        if not port:
+            return jsonify({'error': 'Port number is required'}), 400
+        
+        # Create a detailed prompt for Gemini
+        prompt = f"""You are a cybersecurity expert analyzing a network port scan result. Provide a comprehensive security analysis for the following:
+
+Port: {port}
+Service: {service}
+Banner Information: {banner}
+Severity Level: {severity}
+
+Please provide:
+1. A brief overview of what this port/service indicates
+2. Common vulnerabilities associated with this service
+3. Potential attack vectors
+4. Security recommendations and remediation steps
+5. Best practices for securing this service
+
+Format your response in HTML with proper headings, bullet points, and emphasis on critical security concerns. Use <h3> for section headings, <ul> and <li> for lists, and <strong> for important warnings."""
+
+        # Generate content using Gemini
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
+        )
+        
+        analysis_html = response.text.strip()
+        
+        return jsonify({
+            'analysis_html': analysis_html,
+            'port': port,
+            'service': service
+        })
+        
+    except Exception as e:
+        print(f"Error in AI analysis: {e}")
+        return jsonify({
+            'error': 'Failed to generate AI analysis',
+            'detail': str(e)
+        }), 500
 
 # WebSocket Events
 @socketio.on('start_scan')
