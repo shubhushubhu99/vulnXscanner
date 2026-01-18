@@ -63,12 +63,13 @@ def load_history():
 
 def save_history(history):
     try:
-        ip = socket.gethostbyname(target)
-        return ip, target
-    except: return None, target
+        with open(HISTORY_FILE, 'w') as f:
+            json.dump(history, f, indent=4)
+        print(f"File saved: {HISTORY_FILE}")
+    except Exception as e:
+        print(f"Error saving history: {e}")
 
-# --- Professional & Mobile-Responsive UI Template ---
-HTML_TEMPLATE = """
+# Global storage for state
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -484,13 +485,6 @@ HTML_TEMPLATE = """
 </body>
 </html>
 """
-        with open(HISTORY_FILE, 'w') as f:
-            json.dump(history, f, indent=4)
-        print(f"File saved: {HISTORY_FILE}")
-    except Exception as e:
-        print(f"Error saving history: {e}")
-
-# Global storage for state
 latest_results = {
     'results': None,
     'target': '',
