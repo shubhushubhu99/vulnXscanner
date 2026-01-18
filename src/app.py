@@ -34,6 +34,7 @@ app = Flask(__name__,
 # Prefer env-provided secret key; generate a per-process fallback if missing
 app.config['SECRET_KEY'] = (
     os.environ.get('FLASK_SECRET_KEY')
+    
     or os.environ.get('SECRET_KEY')
     or secrets.token_hex(32)
 )
