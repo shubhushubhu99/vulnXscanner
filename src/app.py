@@ -9,6 +9,10 @@ import os
 import secrets
 import uuid
 from flask import send_file
+from dotenv import load_dotenv
+from google import genai
+
+
 
 # Load environment variables (GEMINI_API_KEY should be in .env)
 load_dotenv()
