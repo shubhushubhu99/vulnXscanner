@@ -7,4 +7,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:8000"]
+# Set working directory to src for proper module imports
+WORKDIR /app/src
+
+CMD ["gunicorn", "--chdir", "/app/src", "app:app", "--bind", "0.0.0.0:8000"]

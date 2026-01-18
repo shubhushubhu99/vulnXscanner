@@ -23,22 +23,11 @@
 
     <!-- Sidebar -->
     <div class="sidebar">
-        <div class="logo">
-            <a href="{{ url_for('landing') }}" style="text-decoration: none; color: inherit;">
-                <span>◈</span> VulnX
-            </a>
-        </div>
-
+        <div class="logo"><a href="{{ url_for('landing') }}"
+                style="text-decoration: none; color: inherit;"><span>◈</span> VulnX</a></div>
         <a href="{{ url_for('index') }}"
-           class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
-            Dashboard
-        </a>
-
-        <a href="/history"
-           class="nav-item {% if active_page == 'history' %}active{% endif %}">
-            Scan History
-        </a>
-
+            class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">Dashboard</a>
+        <a href="/history" class="nav-item {% if active_page == 'history' %}active{% endif %}">Scan History</a>
         <a href="#" class="nav-item">Vulnerability Database</a>
 
         <a href="/subdomain"
