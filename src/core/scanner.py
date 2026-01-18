@@ -89,35 +89,184 @@ def get_address_family(address):
     else:
         return None
 
-def grab_banner(ip, port, address_family=None):
-    """Grab banner from a port, supporting both IPv4 and IPv6"""
+def grab_banner(ip, port, address_family=None, timeout=3):
+    """Grab banner from a port with protocol-specific handling, supporting both IPv4 and IPv6"""
     if address_family is None:
         address_family = get_address_family(ip)
         if address_family is None:
-            return "No banner response"
+            return "Invalid IP address"
     
     try:
         sock = socket.socket(address_family, socket.SOCK_STREAM)
-        sock.settimeout(2)
+        sock.settimeout(timeout)
         sock.connect((ip, port))
         banner = ""
-        try:
-            data = sock.recv(1024)
-            if data: banner += data.decode('utf-8', errors='ignore').strip()
-        except: pass
-        if port in [80, 443, 8080, 8443]:
+        
+        # Protocol-specific banner grabbing
+        if port == 21:  # FTP
+            try:
+                # FTP usually sends banner immediately, but we can try a simple command
+                data = sock.recv(1024)
+                if data:
+                    banner = data.decode('utf-8', errors='ignore').strip()
+                else:
+                    # Try sending a minimal command to elicit response
+                    sock.send(b"USER anonymous\r\n")
+                    response = sock.recv(1024)
+                    if response:
+                        banner = response.decode('utf-8', errors='ignore').strip()
+            except socket.timeout:
+                return f"FTP banner timeout ({timeout}s)"
+            except:
+                return "FTP service detected (no banner)"
+                
+        elif port == 22:  # SSH
+            try:
+                data = sock.recv(1024)
+                if data:
+                    banner = data.decode('utf-8', errors='ignore').strip()
+                    # SSH banners often contain version info
+                    if "SSH-" in banner:
+                        return f"SSH: {banner[:100]}"
+            except socket.timeout:
+                return f"SSH banner timeout ({timeout}s)"
+            except:
+                pass
+                
+        elif port == 23:  # Telnet
+            try:
+                data = sock.recv(1024)
+                if data:
+                    # Telnet banners might contain binary data, clean it up
+                    banner = data.decode('utf-8', errors='ignore').strip()
+                    # Remove non-printable characters
+                    banner = ''.join(c for c in banner if c.isprintable())
+                    if banner:
+                        return f"Telnet: {banner[:100]}"
+            except socket.timeout:
+                return f"Telnet banner timeout ({timeout}s)"
+            except:
+                pass
+                
+        elif port == 25:  # SMTP
+            try:
+                # SMTP usually sends banner immediately
+                data = sock.recv(1024)
+                if data:
+                    banner = data.decode('utf-8', errors='ignore').strip()
+                    if banner.startswith("220"):
+                        return f"SMTP: {banner[:100]}"
+                else:
+                    # Try EHLO command
+                    sock.send(b"EHLO vulnscanner\r\n")
+                    response = sock.recv(1024)
+                    if response:
+                        banner = response.decode('utf-8', errors='ignore').strip()
+                        return f"SMTP: {banner[:100]}"
+            except socket.timeout:
+                return f"SMTP banner timeout ({timeout}s)"
+            except:
+                return "SMTP service detected (no banner)"
+                
+        elif port == 110:  # POP3
+            try:
+                data = sock.recv(1024)
+                if data:
+                    banner = data.decode('utf-8', errors='ignore').strip()
+                    if banner.startswith("+OK"):
+                        return f"POP3: {banner[:100]}"
+            except socket.timeout:
+                return f"POP3 banner timeout ({timeout}s)"
+            except:
+                return "POP3 service detected (no banner)"
+                
+        elif port == 143:  # IMAP
+            try:
+                data = sock.recv(1024)
+                if data:
+                    banner = data.decode('utf-8', errors='ignore').strip()
+                    if banner.startswith("* OK"):
+                        return f"IMAP: {banner[:100]}"
+            except socket.timeout:
+                return f"IMAP banner timeout ({timeout}s)"
+            except:
+                return "IMAP service detected (no banner)"
+                
+        elif port == 3306:  # MySQL
+            try:
+                data = sock.recv(1024)
+                if data and len(data) > 3:
+                    # MySQL handshake packet contains version info
+                    version_end = data.find(b'\x00', 5)
+                    if version_end > 5:
+                        version = data[5:version_end].decode('utf-8', errors='ignore')
+                        return f"MySQL: {version[:50]}"
+            except socket.timeout:
+                return f"MySQL banner timeout ({timeout}s)"
+            except:
+                return "MySQL service detected (no banner)"
+                
+        elif port == 5432:  # PostgreSQL
+            try:
+                # PostgreSQL doesn't send unsolicited banner, but we can try a startup message
+                # For now, just check if connection succeeds
+                return "PostgreSQL service detected"
+            except socket.timeout:
+                return f"PostgreSQL banner timeout ({timeout}s)"
+            except:
+                return "PostgreSQL service detected (no banner)"
+                
+        elif port in [80, 443, 8080, 8443]:  # HTTP/HTTPS
             try:
                 # For IPv6, use bracket notation in Host header
                 host_header = f"[{ip}]" if address_family == socket.AF_INET6 else ip
-                sock.send(b"GET / HTTP/1.1\r\nHost: " + host_header.encode() + b"\r\n\r\n")
+                request = f"GET / HTTP/1.1\r\nHost: {host_header}\r\nUser-Agent: VulnXScanner/1.0\r\n\r\n"
+                sock.send(request.encode())
                 response = sock.recv(1024)
                 if response:
-                    decoded = response.decode('utf-8', errors='ignore').split('\r\n')[0]
-                    banner += f" ({decoded})"
-            except: pass
+                    decoded = response.decode('utf-8', errors='ignore')
+                    lines = decoded.split('\r\n')
+                    if lines and lines[0].startswith('HTTP'):
+                        status_line = lines[0]
+                        server_header = ""
+                        for line in lines[1:]:
+                            if line.lower().startswith('server:'):
+                                server_header = line.split(':', 1)[1].strip()
+                                break
+                        if server_header:
+                            return f"HTTP: {status_line} (Server: {server_header})"
+                        else:
+                            return f"HTTP: {status_line}"
+            except socket.timeout:
+                return f"HTTP banner timeout ({timeout}s)"
+            except:
+                return "HTTP service detected (no banner)"
+        
+        # Generic banner grabbing for other ports
+        try:
+            data = sock.recv(1024)
+            if data:
+                banner = data.decode('utf-8', errors='ignore').strip()
+                # Clean up non-printable characters
+                banner = ''.join(c for c in banner if c.isprintable() and c not in '\r\n\t')
+                if banner:
+                    return f"Service banner: {banner[:100]}"
+        except socket.timeout:
+            return f"Banner timeout ({timeout}s)"
+        except:
+            pass
+            
         sock.close()
-        return banner[:100] if banner else "No banner response"
-    except: return "No banner response"
+        return "Service detected (no banner)"
+        
+    except socket.timeout:
+        return f"Connection timeout ({timeout}s)"
+    except ConnectionRefusedError:
+        return "Connection refused"
+    except OSError as e:
+        return f"Connection error: {str(e)}"
+    except Exception as e:
+        return f"Banner grab failed: {str(e)}"
 
 def scan_target(target_ip, deep_scan, callback=None):
     """Scan target IP (IPv4 or IPv6) for open ports"""
