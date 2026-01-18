@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from core.scanner import (
     is_ipv4, is_ipv6, get_address_family,
-    resolve_target, scan_target, grab_banner
+    resolve_target, scan_target, grab_banner, validate_target
 )
 
 
@@ -274,6 +274,78 @@ class TestEdgeCases(unittest.TestCase):
             scan_target("invalid.ip.address", deep_scan=False)
 
 
+class TestInputValidation(unittest.TestCase):
+    """Test input validation for security"""
+    
+    def test_validate_target_valid_ipv4(self):
+        """Test valid IPv4 addresses"""
+        valid_ipv4 = [
+            "127.0.0.1",
+            "192.168.1.1",
+            "8.8.8.8",
+            "10.0.0.1",
+            "255.255.255.255",
+            "0.0.0.0"
+        ]
+        for ip in valid_ipv4:
+            with self.subTest(ip=ip):
+                valid, error = validate_target(ip)
+                self.assertTrue(valid, f"{ip} should be valid")
+                self.assertIsNone(error)
+    
+    def test_validate_target_valid_ipv6(self):
+        """Test valid IPv6 addresses"""
+        valid_ipv6 = [
+            "::1",
+            "2001:db8::1",
+            "fe80::1",
+            "::",
+            "2001:db8:0:0:0:0:0:1"
+        ]
+        for ip in valid_ipv6:
+            with self.subTest(ip=ip):
+                valid, error = validate_target(ip)
+                self.assertTrue(valid, f"{ip} should be valid")
+                self.assertIsNone(error)
+    
+    def test_validate_target_valid_domains(self):
+        """Test valid domain names"""
+        valid_domains = [
+            "example.com",
+            "sub.example.com",
+            "test-domain.com",
+            "a.co",
+            "localhost"
+        ]
+        for domain in valid_domains:
+            with self.subTest(domain=domain):
+                valid, error = validate_target(domain)
+                self.assertTrue(valid, f"{domain} should be valid")
+                self.assertIsNone(error)
+    
+    def test_validate_target_invalid_inputs(self):
+        """Test invalid inputs"""
+        invalid_inputs = [
+            ("", "Target is empty"),
+            ("   ", "Target is empty"),
+            ("a" * 254, "Target is too long"),  # 254 chars
+            ("192.168.1.1; rm -rf /", "Target contains potentially dangerous characters"),
+            ("example.com | cat /etc/passwd", "Target contains potentially dangerous characters"),
+            ("invalid..domain", "Invalid IP address or domain name format"),
+            ("-invalid.com", "Invalid IP address or domain name format"),
+            ("invalid-.com", "Invalid IP address or domain name format"),
+            ("256.1.1.1", "Invalid IP address or domain name format"),
+            ("gggg::1", "Invalid IP address or domain name format"),
+            ("not.a.valid.hostname.12345", "Invalid IP address or domain name format"),
+            ("999.999.999.999", "Invalid IP address or domain name format")
+        ]
+        for target, expected_error in invalid_inputs:
+            with self.subTest(target=target):
+                valid, error = validate_target(target)
+                self.assertFalse(valid, f"{target} should be invalid")
+                self.assertIn(expected_error, error)
+
+
 def run_tests():
     """Run all test suites"""
     # Create test suite
@@ -286,6 +358,7 @@ def run_tests():
     suite.addTests(loader.loadTestsFromTestCase(TestAddressFamilyDetection))
     suite.addTests(loader.loadTestsFromTestCase(TestBackwardCompatibility))
     suite.addTests(loader.loadTestsFromTestCase(TestEdgeCases))
+    suite.addTests(loader.loadTestsFromTestCase(TestInputValidation))
     
     # Run tests
     runner = unittest.TextTestRunner(verbosity=2)

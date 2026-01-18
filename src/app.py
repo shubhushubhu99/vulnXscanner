@@ -2,7 +2,7 @@ from datetime import datetime
 import importlib.util
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from flask_socketio import SocketIO, emit
-from core.scanner import resolve_target, scan_target, check_subdomain
+from core.scanner import resolve_target, scan_target, check_subdomain, validate_target
 from core.reporter import generate_pdf_report
 import google.generativeai as genai
 from dotenv import load_dotenv
@@ -255,6 +255,14 @@ def handle_scan(data):
 
 def run_scan_task(target, deep_scan):
     print(f"Starting background scan for: {target}")
+    
+    # Validate target
+    valid, error_msg = validate_target(target)
+    if not valid:
+        socketio.emit('scan_log', {'message': f"❌ Validation failed: {error_msg}"})
+        socketio.emit('scan_complete', {'total_open': 0, 'results': []})
+        return
+    
     socketio.emit('scan_log', {'message': f"Resolving target {target}..."})
     
     ip, resolved_host = resolve_target(target)
