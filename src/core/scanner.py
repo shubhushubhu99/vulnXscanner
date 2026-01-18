@@ -2,6 +2,7 @@ import socket
 import threading
 import queue
 import re
+import ipaddress
 from datetime import datetime
 
 common_ports = [21, 22, 23, 25, 53, 80, 110, 135, 137, 138, 139, 143, 161, 389, 443, 445, 3306, 3389, 5432, 5900, 8080, 8443, 9200]
@@ -148,9 +149,10 @@ def scan_target(target_ip, deep_scan, callback=None):
                     severity = severity_map.get(port, "Low")
                     threat = port_threats.get(port, "General exposure risk detected.")
                     res = (port, service, banner, severity, threat)
-                    results.append(res)
-                    if callback:
-                        callback('port_found', {'port': port, 'service': service, 'banner': banner})
+                    with lock:
+                        results.append(res)
+                        if callback:
+                            callback('port_found', {'port': port, 'service': service, 'banner': banner})
                 sock.close()
             except: pass
             
@@ -173,6 +175,60 @@ def scan_target(target_ip, deep_scan, callback=None):
         'ports': sorted(results, key=lambda x: x[0]),
         'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
+
+def validate_target(target):
+    """Validate target IP address or domain name for security"""
+    if not target or not isinstance(target, str):
+        return False, "Target is empty or invalid type"
+    
+    target = target.strip()
+    if not target:
+        return False, "Target is empty"
+    
+    # Check length to prevent overly long inputs
+    if len(target) > 253:  # Max domain length
+        return False, "Target is too long"
+    
+    # Remove http/https prefixes if present
+    target_clean = target.replace("http://", "").replace("https://", "").split("/")[0]
+    
+    # Check for IPv4
+    try:
+        ipaddress.IPv4Address(target_clean)
+        return True, None
+    except ipaddress.AddressValueError:
+        pass
+    
+    # Check for IPv6 (handle brackets)
+    if target_clean.startswith('[') and target_clean.endswith(']'):
+        target_clean = target_clean[1:-1]
+    try:
+        ipaddress.IPv6Address(target_clean)
+        return True, None
+    except ipaddress.AddressValueError:
+        pass
+    
+    # Check for domain name
+    # More strict domain regex: alphanumeric, dots, hyphens, but not starting/ending with dot/hyphen
+    # TLD must be 2-63 chars, letters only (simplified)
+    domain_pattern = r'^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-))*$'
+    if re.match(domain_pattern, target_clean):
+        parts = target_clean.split('.')
+        if len(parts) >= 2:
+            # Check TLD is alphabetic and 2+ chars
+            tld = parts[-1]
+            if len(tld) >= 2 and tld.isalpha():
+                return True, None
+        elif len(parts) == 1 and target_clean == 'localhost':
+            # Allow localhost
+            return True, None
+    
+    # Check for potential injection characters
+    dangerous_chars = [';', '&', '|', '`', '$', '(', ')', '<', '>', '\n', '\r']
+    if any(char in target for char in dangerous_chars):
+        return False, "Target contains potentially dangerous characters"
+    
+    return False, "Invalid IP address or domain name format"
 
 def resolve_target(target):
     """Resolve target to IP address, supporting both IPv4 and IPv6"""
