@@ -149,9 +149,10 @@ def scan_target(target_ip, deep_scan, callback=None):
                     severity = severity_map.get(port, "Low")
                     threat = port_threats.get(port, "General exposure risk detected.")
                     res = (port, service, banner, severity, threat)
-                    results.append(res)
-                    if callback:
-                        callback('port_found', {'port': port, 'service': service, 'banner': banner})
+                    with lock:
+                        results.append(res)
+                        if callback:
+                            callback('port_found', {'port': port, 'service': service, 'banner': banner})
                 sock.close()
             except: pass
             
