@@ -824,3 +824,116 @@ footer {
         padding: 32px 24px;
     }
 }
+/* === AI Analysis Modal === */
+.ai-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.92);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.ai-modal-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 780px;
+    max-height: 88vh;
+    overflow-y: auto;
+    padding: 32px;
+    position: relative;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+}
+
+.ai-loading {
+    text-align: center;
+    color: var(--accent);
+    font-size: 1.2rem;
+    padding: 40px 0;
+    animation: pulse 2s infinite;
+}
+
+.ai-analysis-output {
+    line-height: 1.7;
+    font-size: 0.98rem;
+    color: var(--text-primary);
+}
+
+.ai-heading {
+    color: var(--accent);
+    margin-bottom: 24px;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.ai-port-info {
+    background: rgba(16, 185, 129, 0.08);
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-bottom: 24px;
+}
+
+.ai-section {
+    margin-bottom: 28px;
+}
+
+.ai-section-title {
+    color: var(--accent);
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+}
+
+.ai-bullet-list {
+    list-style: none;
+    padding-left: 0;
+}
+
+.ai-bullet-list li {
+    position: relative;
+    padding-left: 28px;
+    margin-bottom: 10px;
+}
+
+.ai-bullet-list li::before {
+    content: "•";
+    color: var(--accent);
+    position: absolute;
+    left: 0;
+    font-size: 1.4rem;
+    line-height: 1;
+}
+
+.ai-closing {
+    font-style: italic;
+    color: var(--text-secondary);
+    margin: 20px 0;
+    padding: 12px;
+    background: rgba(239, 68, 68, 0.08);
+    border-left: 4px solid var(--critical);
+    border-radius: 6px;
+}
+
+.ai-footer {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+}
+
+.ai-close-btn {
+    margin: 0 auto;
+    display: block;
+}
+
+/* Pulse animation for loading */
+@keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
