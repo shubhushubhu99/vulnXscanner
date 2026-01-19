@@ -253,6 +253,10 @@ def handle_scan(data):
     # Run scan in a background task to avoid blocking the socket handler
     socketio.start_background_task(run_scan_task, target, deep_scan)
 
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template("404.html"), 404
+
 def run_scan_task(target, deep_scan):
     print(f"Starting background scan for: {target}")
     socketio.emit('scan_log', {'message': f"Resolving target {target}..."})
@@ -309,3 +313,4 @@ if __name__ == '__main__':
     print(f"📍 History file location: {HISTORY_FILE}")
     print("📍 URL: http://127.0.0.1:5000")
     socketio.run(app, host='127.0.0.1', port=5000, debug=True, allow_unsafe_werkzeug=True)
+
