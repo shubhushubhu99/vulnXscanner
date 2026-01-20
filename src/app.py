@@ -41,26 +41,28 @@ app.config['SECRET_KEY'] = (
 # Use threading mode for broad compatibility
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
-# Ensure absolute path for history file
+# ---------------- GLOBAL STATE ---------------- #
+latest_results = {'results': None, 'target': '', 'deep_scan': False}
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Let's put it in the root (one level up from src)
 HISTORY_FILE = os.path.join(os.path.dirname(BASE_DIR), "scan_history.json")
 MESSAGES_FILE = os.path.join(os.path.dirname(BASE_DIR), "messages.json")
 
-
+# ---------------- TEMPLATE HELPERS ---------------- #
 @app.context_processor
 def inject_current_year():
     return {"current_year": datetime.now().year}
 
+# ---------------- HISTORY & MESSAGES ---------------- #
 def load_history():
     if os.path.exists(HISTORY_FILE):
         try:
             with open(HISTORY_FILE, 'r') as f:
                 data = json.load(f)
                 return data if isinstance(data, list) else []
-        except Exception as e:
-            print(f"Error loading history: {e}")
-            return []
+        except:
+            pass
     return []
 
 def save_history(history):
@@ -103,11 +105,11 @@ latest_results = {
 }
 
 @app.route('/', methods=['GET'])
-def landing():
-    return render_template('landing.html')
+def animation():
+    return render_template('animation.html')
 
-@app.route('/dashboard', methods=['GET'])
-def index():
+@app.route('/home', methods=['GET'])
+def home():
     return render_template(
         'dashboard.html',
         results=latest_results['results'],
@@ -119,20 +121,13 @@ def index():
 @app.route('/history', methods=['GET'])
 def history_page():
     history = load_history()
-    print(f"Loading history page. Found {len(history)} items.")
-    return render_template(
-        'history.html',
-        history=history,
-        active_page='history'
-    )
+    return render_template('history.html', history=history, active_page='history')
 
 @app.route('/clear', methods=['POST'])
 def clear():
     global latest_results
     latest_results = {'results': None, 'target': '', 'deep_scan': False}
-    # Also clear history file for fresh start if requested? No, usually clear just UI.
-    return redirect(url_for('index'))
-    #return jsonify({'status': 'cleared'})  Earlier return statement commented out
+    return redirect(url_for('home'))
 
 @app.route('/subdomain', methods=['GET', 'POST'])
 def subdomain_page():
@@ -304,10 +299,9 @@ def run_scan_task(target, deep_scan):
             'results': res_list
         })
     except Exception as e:
-        print(f"Error during scan: {e}")
-        socketio.emit('scan_log', {'message': f"❌ Error: {str(e)}"})
-        socketio.emit('scan_complete', {'total_open': 0, 'results': []})
+        return jsonify({'error': 'Failed', 'detail': str(e)}), 500
 
+# ---------------- RUN ---------------- #
 if __name__ == '__main__':
     print("🚀 VulnX Professional Edition starting...")
     print(f"📍 History file location: {HISTORY_FILE}")
