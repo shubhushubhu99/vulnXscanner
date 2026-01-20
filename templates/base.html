@@ -23,9 +23,11 @@
 
     <!-- Sidebar -->
     <div class="sidebar">
-        <div class="logo"><a href="{{ url_for('landing') }}"
+        <!-- FIXED: Use 'animation' instead of 'landing' -->
+        <div class="logo"><a href="{{ url_for('animation') }}"
                 style="text-decoration: none; color: inherit;"><span>◈</span> VulnX</a></div>
-        <a href="{{ url_for('index') }}"
+
+        <a href="{{ url_for('home') }}"
             class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">Dashboard</a>
         <a href="/history" class="nav-item {% if active_page == 'history' %}active{% endif %}">Scan History</a>
         <a href="#" class="nav-item">Vulnerability Database</a>
@@ -66,7 +68,6 @@
                   <a href="#" aria-label="VulnX Twitter / X profile">Twitter / X</a>
                   <a href="mailto:contact@vulnx.io" aria-label="Email VulnX team">Email</a>
                 </div>
-
 
             </div>
 

@@ -1,0 +1,53 @@
+/* Reset */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", Arial, sans-serif;
+  }
+
+/* Full screen dark background */
+body {
+background: radial-gradient(circle at top, #0f2027, #000);
+height: 100vh;
+overflow: hidden;
+}
+
+/* Intro container */
+.intro-container {
+display: flex;
+align-items: center;
+justify-content: center;
+height: 100vh;
+}
+
+/* Center content */
+.intro-content {
+text-align: center;
+animation: fadeOut 0.8s ease-in-out forwards;
+animation-delay: 2s;
+}
+
+/* VulnX title */
+.intro-title {
+  font-weight: 700;
+font-size: 4rem;
+letter-spacing: 4px;
+margin-bottom: 40px;
+display: flex;
+color: #14c38e;
+align-items: center;
+gap: 10px;
+
+}
+
+/* Blink animation (slower) */
+@keyframes blink {
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0; }
+}
+
+.intro-title {
+  animation: blink 1.875s ease-in-out 4; /* triple slow */
+}
