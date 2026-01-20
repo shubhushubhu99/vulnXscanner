@@ -1,43 +1,43 @@
 from datetime import datetime
 import importlib.util
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for, send_file
 from flask_socketio import SocketIO, emit
 from core.scanner import resolve_target, scan_target, check_subdomain
 from core.reporter import generate_pdf_report
-import google.generativeai as genai
 from dotenv import load_dotenv
+import google.genai as genai  # <-- updated import
 import json
 import os
 import secrets
 import uuid
-from flask import send_file
-from dotenv import load_dotenv
-from google import genai
-
-
 
 # Load environment variables (GEMINI_API_KEY should be in .env)
 load_dotenv()
 
 # Configure the Gemini SDK correctly (global configuration)
-app = Flask(__name__, 
+app = Flask(
+    __name__,
     template_folder='../templates',
-    static_folder='../static')
+    static_folder='../static'
+)
 
 # Global Gemini client (created once)
-api_key = os.getenv("GEMINI_API_KEY")
+# api_key = os.getenv("GEMINI_API_KEY")
+api_key = "YOUR_API_KEY_HERE"
+
 
 if not api_key:
     raise ValueError("GEMINI_API_KEY not found in environment variables")
 
 client = genai.Client(api_key=api_key)
+
 # Prefer env-provided secret key; generate a per-process fallback if missing
 app.config['SECRET_KEY'] = (
     os.environ.get('FLASK_SECRET_KEY')
-
     or os.environ.get('SECRET_KEY')
     or secrets.token_hex(32)
 )
+
 # Use threading mode for broad compatibility
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
@@ -45,7 +45,6 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 latest_results = {'results': None, 'target': '', 'deep_scan': False}
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# Let's put it in the root (one level up from src)
 HISTORY_FILE = os.path.join(os.path.dirname(BASE_DIR), "scan_history.json")
 MESSAGES_FILE = os.path.join(os.path.dirname(BASE_DIR), "messages.json")
 
@@ -97,13 +96,7 @@ def save_message(message_data):
         print(f"Error saving message: {e}")
         return False
 
-# Global storage for state
-latest_results = {
-    'results': None,
-    'target': '',
-    'deep_scan': False
-}
-
+# ---------------- ROUTES ---------------- #
 @app.route('/', methods=['GET'])
 def animation():
     return render_template('animation.html')
@@ -201,7 +194,6 @@ def ai_analysis():
         if not port:
             return jsonify({'error': 'Port number is required'}), 400
         
-        # Create a detailed prompt for Gemini
         prompt = f"""You are a cybersecurity expert analyzing a network port scan result. Provide a comprehensive security analysis for the following:
 
 Port: {port}
@@ -218,7 +210,6 @@ Please provide:
 
 Format your response in HTML with proper headings, bullet points, and emphasis on critical security concerns. Use <h3> for section headings, <ul> and <li> for lists, and <strong> for important warnings."""
 
-        # Generate content using Gemini
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=prompt
@@ -244,8 +235,6 @@ Format your response in HTML with proper headings, bullet points, and emphasis o
 def handle_scan(data):
     target = data.get('target')
     deep_scan = data.get('deep_scan', False)
-    
-    # Run scan in a background task to avoid blocking the socket handler
     socketio.start_background_task(run_scan_task, target, deep_scan)
 
 @app.errorhandler(404)
@@ -270,8 +259,6 @@ def run_scan_task(target, deep_scan):
 
     try:
         scan_data = scan_target(ip, deep_scan, callback=scan_callback)
-        
-        # Store results
         res_list = scan_data['ports']
         latest_results['results'] = res_list
         latest_results['target'] = target
@@ -282,12 +269,11 @@ def run_scan_task(target, deep_scan):
             'target': target,
             'ip': ip,
             'ports_found': len(res_list),
-            'results': res_list, # Need to save full results for the report!
+            'results': res_list,
             'timestamp': scan_data['timestamp'],
             'deep_scan': deep_scan
         }
         
-        # Persistent saving
         current_history = load_history()
         current_history.insert(0, history_item)
         save_history(current_history[:50])
@@ -307,4 +293,3 @@ if __name__ == '__main__':
     print(f"📍 History file location: {HISTORY_FILE}")
     print("📍 URL: http://127.0.0.1:5000")
     socketio.run(app, host='127.0.0.1', port=5000, debug=True, allow_unsafe_werkzeug=True)
-
