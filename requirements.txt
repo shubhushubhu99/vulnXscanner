@@ -7,4 +7,5 @@ python-socketio==5.8.0
 python-engineio==4.4.1
 reportlab==4.0.9
 google-generativeai
+google-genai
 python-dotenv

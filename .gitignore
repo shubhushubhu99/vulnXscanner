@@ -10,3 +10,8 @@ scan_history.json
 .idea/__pycache__/
 *.pyc
 .DS_Store
+
+# Docker
+data/
+messages.json
+

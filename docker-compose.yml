@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  vulnxscanner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vulnxscanner
+    image: vulnxscanner:latest
+    ports:
+      - "8000:8000"
+    environment:
+      # Flask configuration
+      - FLASK_ENV=production
+      - FLASK_APP=src/app.py
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY:-your-secret-key-change-this-in-production}
+      
+      # Google Gemini API Key (required for AI analysis)
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      
+      # Application settings
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=info
+    
+    volumes:
+      # Persist scan history and messages
+      - ./data:/app/data
+      # Mount history files
+      - scan_history:/app/scan_history.json
+      - messages_data:/app/messages.json
+    
+    restart: unless-stopped
+    
+    networks:
+      - vulnx-network
+    
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+volumes:
+  scan_history:
+    driver: local
+  messages_data:
+    driver: local
+
+networks:
+  vulnx-network:
+    driver: bridge
