@@ -5,19 +5,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}VulnX | Security Scanner{% endblock %}</title>
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap"
-        rel="stylesheet">
+          rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+
     {% block extra_css %}{% endblock %}
 </head>
 
 <body>
+    <!-- Mobile Hamburger -->
     <div class="hamburger" onclick="this.parentElement.querySelector('.sidebar').classList.toggle('open')">
         <div></div>
         <div></div>
         <div></div>
     </div>
+
+    <!-- Sidebar -->
     <div class="sidebar">
+
         <!-- Updated logo link: goes to splash (animation) or index (dashboard) -->
         <div class="logo">
             <a href="{{ url_for('index') }}" style="text-decoration: none; color: inherit;">
@@ -25,20 +31,65 @@
             </a>
         </div>
         <a href="{{ url_for('index') }}" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">Dashboard</a>
+
+        <div class="logo"><a href="{{ url_for('landing') }}"
+                style="text-decoration: none; color: inherit;"><span>◈</span> VulnX</a></div>
+        <a href="{{ url_for('index') }}"
+            class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">Dashboard</a>
+
         <a href="/history" class="nav-item {% if active_page == 'history' %}active{% endif %}">Scan History</a>
         <a href="#" class="nav-item">Vulnerability Database</a>
-        <a href="/subdomain" class="nav-item {% if active_page == 'subdomain' %}active{% endif %}">Subdomain Finder</a>
-        <a href="#" class="nav-item" style="margin-top:auto">Settings</a>
+
+        <a href="/subdomain"
+           class="nav-item {% if active_page == 'subdomain' %}active{% endif %}">
+            Subdomain Finder
+        </a>
+
+        <a href="#" class="nav-item" style="margin-top: auto;">Settings</a>
     </div>
+
+    <!-- Main Content -->
     <div class="content">
         {% block content %}{% endblock %}
-        <footer>
-            VulnX Security Engine • Enterprise Version 2.0 • {{ current_year }}
+
+        <!-- Footer -->
+        <footer class="site-footer">
+            <div class="footer-container">
+
+                <div class="footer-brand">
+                    <h3>VulnX</h3>
+                    <p>Modern vulnerability scanning &amp; security insights.</p>
+                </div>
+
+                <div class="footer-links">
+                    <h4>Project</h4>
+                    <a href="#">About</a>
+                    <a href="#">Documentation</a>
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                </div>
+
+                <div class="footer-links">
+                  <h4>Connect</h4>
+                  <a href="#" aria-label="VulnX GitHub repository">GitHub</a>
+                  <a href="#" aria-label="VulnX LinkedIn profile">LinkedIn</a>
+                  <a href="#" aria-label="VulnX Twitter / X profile">Twitter / X</a>
+                  <a href="mailto:contact@vulnx.io" aria-label="Email VulnX team">Email</a>
+                </div>
+
+
+            </div>
+
+            <div class="footer-bottom">
+                © {{ current_year }} VulnX. All rights reserved.
+            </div>
         </footer>
     </div>
 
+    <!-- Scripts -->
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
     {% block extra_js %}{% endblock %}
 </body>
 
