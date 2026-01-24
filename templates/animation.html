@@ -1,0 +1,48 @@
+<!-- templates/animation.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VulnX | Loading...</title>
+<style>
+    body {
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #030712; /* Blackish background */
+        font-family: 'Inter', sans-serif;
+    }
+
+    .logo {
+        font-size: 3rem;
+        font-weight: 800;
+        color: #10b981;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: blink 1s ease-in-out 3; /* Blink 3 times */
+    }
+
+    @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0; }
+    }
+</style>
+</head>
+<body>
+    <div class="logo">
+        <span>◈</span> VulnX
+    </div>
+
+    <script>
+    // Redirect to dashboard after 3 seconds (after blinking)
+    setTimeout(() => {
+        window.location.href = "{{ url_for('index') }}"; // index() function points to /dashboard
+    }, 3000);
+</script>
+
+</body>
+</html>
