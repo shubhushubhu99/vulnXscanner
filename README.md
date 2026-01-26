@@ -135,7 +135,6 @@ sequenceDiagram
     participant Scanner as Scanner Engine
     participant Network as Network Layer
     participant Storage as History Storage
-
     User->>Browser: Enter target (IP/hostname)
     Browser->>SocketIO: Emit 'start_scan' event
     SocketIO->>Flask: handle_scan(data)
@@ -463,7 +462,6 @@ sequenceDiagram
     participant Socket as Socket API
     participant Service as Target Service
     participant Mapper as Service Mapper
-
     Scanner->>Socket: Create socket(AF_INET/AF_INET6)
     Scanner->>Socket: connect((ip, port))
     Socket->>Service: TCP Connection
@@ -513,7 +511,6 @@ sequenceDiagram
     participant Flask
     participant Scanner
     participant Callback
-
     Browser->>SocketIO: Connect WebSocket
     SocketIO-->>Browser: Connection established
     
@@ -660,7 +657,6 @@ sequenceDiagram
     participant Scanner
     participant Storage
     participant Gemini
-
     Note over User,Gemini: Initial Page Load
     User->>Browser: Navigate to /dashboard
     Browser->>Flask: GET /dashboard
@@ -1166,7 +1162,6 @@ sequenceDiagram
     participant Scanner
     participant Socket
     participant Service
-
     Scanner->>Socket: Create socket(AF_INET/AF_INET6)
     Scanner->>Socket: settimeout(2 seconds)
     Scanner->>Socket: connect((ip, port))
