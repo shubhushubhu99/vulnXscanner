@@ -1,0 +1,47 @@
+:root {
+    --vulnx-emerald: #22c55e;
+    --vulnx-blue: #3b82f6;
+}
+
+.analyzer-header h2 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, var(--vulnx-emerald) 0%, var(--vulnx-blue) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.analyzer-header p {
+    color: #9ca3af;
+    margin-bottom: 4rem;
+    font-size: 1.25rem;
+}
+
+#targetUrl {
+    background: #010409;
+    border: 1px solid #30363d;
+    color: white;
+    padding: 1.2rem;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 800px;
+    margin-bottom: 2rem;
+}
+
+#runAudit {
+    background: linear-gradient(135deg, #22c55e 0%, #10b981 100%);
+    color: #0d1117;
+    font-weight: 700;
+    padding: 14px 35px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+}
+
+.score-badge {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--vulnx-emerald);
+    margin-bottom: 20px;
+}

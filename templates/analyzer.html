@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/analyzer.css') }}">
+
+<div class="analyzer-container">
+    <div class="analyzer-header">
+        <h2>Security Audit</h2>
+        <p>Analyze HTTP security headers and SSL certificate health in real-time.</p>
+    </div>
+
+    <div class="search-section">
+        <input type="text" id="targetUrl" placeholder="Enter URL (e.g., https://google.com)">
+        <div class="button-wrapper">
+            <button id="runAudit">Analyze Site &rarr;</button>
+        </div>
+    </div>
+
+    <div id="auditResults" class="results-grid">
+        </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/analyzer.js') }}"></script>
+{% endblock %}
