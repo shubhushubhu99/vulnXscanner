@@ -15,7 +15,6 @@ from dotenv import load_dotenv
 from google import genai
 from core.osint_engine import OSINTEngine
 from core.whois_lookup import WhoisLookup
-from core.header_analyzer import HeaderAnalyzer
 
 # Load environment variables (GEMINI_API_KEY should be in .env)
 load_dotenv()
@@ -272,27 +271,6 @@ def api_osint(target):
         return jsonify({"error": str(e)}), 500
 
 # ------------------------------------------
-
-        return jsonify(results)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-# --- SECURITY AUDIT MODULE (NEW FEATURE) ---
-
-@app.route('/analyzer')
-def analyzer_page():
-    """Renders the Security Headers & SSL Audit page"""
-    return render_template('analyzer.html', active_page='analyzer')
-
-@app.route('/api/analyze')
-def api_analyze():
-    """API endpoint for header and SSL analysis"""
-    target = request.args.get('url')
-    if not target:
-        return jsonify({"error": "No URL provided"}), 400
-        
-    analyzer = HeaderAnalyzer(target)
-    return jsonify(analyzer.analyze())
 
 # WebSocket Events
 @socketio.on('start_scan')
