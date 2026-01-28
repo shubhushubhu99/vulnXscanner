@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}VulnX | OSINT Reconnaissance{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/osint.css') }}">
+
+<div class="osint-container">
+    <div class="osint-header">
+        <h2>OSINT Reconnaissance</h2>
+        <p>Discover the digital footprint of your target. Built for modern security professionals.</p>
+    </div>
+    
+    <div class="search-section">
+        <input type="text" id="osintTarget" placeholder="Enter Domain (e.g., google.com)" autocomplete="off">
+        <div class="button-wrapper">
+            <button id="startOsint">Start Recon &rarr;</button>
+        </div>
+    </div>
+
+    <div id="osintResults" class="results-grid">
+        </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/osint.js') }}"></script>
+{% endblock %}
