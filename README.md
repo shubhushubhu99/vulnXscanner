@@ -1382,8 +1382,13 @@ gantt
     Responsive Layout            :done, 2024-11-01, 2024-12-01
     section Testing
     Comprehensive Test Suite     :done, 2024-12-01, 2025-01-01
+    
 ```
-
+### 🛡️ Security Headers Analysis (New!)
+The tool now includes a dedicated module to audit the defensive posture of a web server by checking for critical HTTP Security Headers:
+- **Detection**: CSP, HSTS, X-Frame-Options, and more.
+- **Guidance**: Provides actionable suggestions for every missing header.
+- **Smart Logic**: Automatically handles HTTPS upgrades and follows redirects for accurate reporting.
 ---
 
 ## 🤝 Contributing
