@@ -1,0 +1,66 @@
+/* OSINT Module - Visual Fidelity Upgrade */
+
+:root {
+    --vulnx-emerald: #22c55e;      /* The green from 'Get Started Free' */
+    --vulnx-blue-electric: #3b82f6; /* The blue from 'Digital Frontier' */
+    --vulnx-muted: #9ca3af;
+}
+
+/* 1. Header Styling - Emerald-to-Blue Gradient */
+.osint-header h2 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.5rem; /* Space between Title and Subtitle */
+    
+    background: linear-gradient(135deg, var(--vulnx-emerald) 0%, var(--vulnx-blue-electric) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: block;
+}
+
+.osint-header p {
+    color: var(--vulnx-muted);
+    font-size: 1.25rem;
+    margin-bottom: 4rem; /* Massive space before the input box */
+    line-height: 1.6;
+    max-width: 700px;
+}
+
+/* 2. Input Box & Spacing */
+#osintTarget {
+    background: #010409;
+    border: 1px solid #30363d;
+    color: #ffffff;
+    padding: 1.2rem 1.5rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    width: 100%;
+    max-width: 800px;
+    margin-bottom: 2rem; /* Space between input and button */
+    transition: all 0.3s ease;
+}
+
+#osintTarget:focus {
+    border-color: var(--vulnx-emerald);
+    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
+    outline: none;
+}
+
+/* 3. Button Styling */
+#startOsint {
+    background: linear-gradient(135deg, #22c55e 0%, #10b981 100%);
+    color: #0d1117;
+    font-weight: 700;
+    padding: 14px 35px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+#startOsint:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(34, 197, 94, 0.4);
+}

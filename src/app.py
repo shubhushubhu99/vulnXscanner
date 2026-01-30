@@ -13,8 +13,10 @@ import uuid
 from flask import send_file
 from dotenv import load_dotenv
 from google import genai
-from core.mapper import TopologyMapper
 
+from core.mapper import TopologyMapper
+from core.osint_engine import OSINTEngine
+from core.whois_lookup import WhoisLookup
 
 
 # Load environment variables (GEMINI_API_KEY should be in .env)
@@ -256,6 +258,34 @@ Format your response in HTML with proper headings, bullet points, and emphasis o
             'error': 'Failed to generate AI analysis',
             'detail': str(e)
         }), 500
+        
+# --- OSINT & RECON MODULE (NEW FEATURE) ---
+
+@app.route('/osint')
+def osint_page():
+    """Renders the new OSINT Reconnaissance dashboard."""
+    return render_template('osint.html', active_page='osint')
+
+@app.route('/api/osint/<target>')
+def api_osint(target):
+    """
+    API endpoint for OSINT data. 
+    Keeps logic separate from the main port scanner.
+    """
+    try:
+        engine = OSINTEngine(target)
+        whois = WhoisLookup()
+        
+        results = {
+            "dns": engine.get_dns_records(),
+            "social": engine.scan_social_presence(),
+            "whois": whois.get_data(target)
+        }
+        return jsonify(results)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ------------------------------------------
 
 # WebSocket Events
 @socketio.on('start_scan')
@@ -320,6 +350,8 @@ def run_scan_task(target, deep_scan):
         print(f"Error during scan: {e}")
         socketio.emit('scan_log', {'message': f"❌ Error: {str(e)}"})
         socketio.emit('scan_complete', {'total_open': 0, 'results': []})
+        
+
 
 if __name__ == '__main__':
     print("🚀 VulnX Professional Edition starting...")
