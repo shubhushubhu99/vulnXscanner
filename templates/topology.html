@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/topology.css') }}">
+<div class="topology-container">
+    <h2 class="emerald-header">Network Topology Mapper</h2>
+    <p class="text-secondary">Visualizing logical connections and asset distribution.</p>
+    <div id="network-map"></div>
+</div>
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<script src="{{ url_for('static', filename='js/topology.js') }}"></script>
+{% endblock %}

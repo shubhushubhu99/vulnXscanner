@@ -35,10 +35,19 @@
             Subdomain Finder
         </a>
 
+
+      <a href="{{ url_for('topology_page') }}" class="nav-item {% if active_page == 'topology' %}active{% endif %}">
+    <div class="nav-content">
+        <i class="fas fa-project-diagram"></i>
+        <span>Network Map</span>
+    </div>
+</a>
+
         <a href="{{ url_for('osint_page') }}"
            class="nav-item {% if active_page == 'osint' %}active{% endif %}"> 
            OSINT Recon
         </a>
+
 
 
         <a href="#" class="nav-item" style="margin-top: auto;">Settings</a>
