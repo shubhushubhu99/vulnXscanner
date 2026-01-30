@@ -13,6 +13,7 @@ import uuid
 from flask import send_file
 from dotenv import load_dotenv
 from google import genai
+from core.mapper import TopologyMapper
 
 
 
@@ -192,6 +193,18 @@ def export_report(scan_id):
         download_name=f"vulnx_report_{scan_data.get('target', 'unknown')}_{scan_data.get('timestamp')}.pdf",
         mimetype='application/pdf'
     )
+
+@app.route('/topology')
+def topology_page():
+    return render_template('topology.html', active_page='topology')
+
+@app.route('/api/topology-data')
+def api_topology_data():
+    # In a real scenario, this pulls from your scan history
+    # For testing, we return a structured graph
+    mapper = TopologyMapper() 
+    return jsonify(mapper.generate_graph_data())
+
 
 @app.route('/ai_analysis', methods=['POST'])
 def ai_analysis():
