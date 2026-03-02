@@ -30,9 +30,9 @@
 
             <a href="{{ url_for('dashboard') }}" data-nav-link="dashboard"
    class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
-   Dashboard
+   Port Scanner
 </a>
-        <a href="/history" data-nav-link="history" class="nav-item {% if active_page == 'history' %}active{% endif %}">Scan History</a>
+       
         <a href="/database-vulnerability" data-nav-link="database-vulnerability" class="nav-item {% if active_page == 'database-vulnerability' %}active{% endif %}"> Database Vulnerability</a>
 
         <a href="/subdomain" data-nav-link="subdomain"
@@ -53,7 +53,7 @@
            OSINT Recon
         </a>
 
-
+         <a href="/history" data-nav-link="history" class="nav-item {% if active_page == 'history' %}active{% endif %}">Scan History</a>
 
         <a href="#" class="nav-item" style="margin-top: auto;">Settings</a>
     </div>

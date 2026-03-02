@@ -1,5 +1,11 @@
 from datetime import datetime
 import importlib.util
+import sys
+from pathlib import Path
+
+# Add src directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent))
+
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from flask_socketio import SocketIO, emit
 from core.scanner import resolve_target, scan_target, check_subdomain
@@ -862,7 +868,7 @@ def handle_db_scan(data):
     deep_scan = data.get('deep_scan', False)
     
     if not target:
-        emit('db_scan_log', {'message': "❌ No target specified"})
+        emit('db_scan_log', {'message': "[ERROR] No target specified"})
         return
     
     # Run scan in background task
@@ -873,16 +879,16 @@ def run_db_scan_task(target, deep_scan):
     print(f"Starting background database vulnerability scan for: {target}")
     
     try:
-        emit('db_scan_log', {'message': f"🔍 Starting database vulnerability scan for {target}"})
-        emit('db_scan_log', {'message': ""})
+        socketio.emit('db_scan_log', {'message': f"Starting database vulnerability scan for {target}"})
+        socketio.emit('db_scan_log', {'message': ""})
         
         if deep_scan:
-            emit('db_scan_log', {'message': "🔬 DEEP SCAN MODE: Extended checks enabled"})
-            emit('db_scan_log', {'message': "Testing SQL injection, exposed ports, sensitive files, headers, and CORS"})
+            socketio.emit('db_scan_log', {'message': "DEEP SCAN MODE: Extended checks enabled"})
+            socketio.emit('db_scan_log', {'message': "Testing SQL injection, exposed ports, sensitive files, headers, and CORS"})
         else:
-            emit('db_scan_log', {'message': "⚡ STANDARD SCAN: Running basic vulnerability checks"})
+            socketio.emit('db_scan_log', {'message': "STANDARD SCAN: Running basic vulnerability checks"})
         
-        emit('db_scan_log', {'message': ""})
+        socketio.emit('db_scan_log', {'message': ""})
         
         def progress_callback(progress_data):
             """Callback to emit socket events during scanning"""
@@ -892,7 +898,7 @@ def run_db_scan_task(target, deep_scan):
                 total = progress_data.get('total', 1)
                 message = progress_data.get('message', '')
                 
-                emit('db_scan_progress', {
+                socketio.emit('db_scan_progress', {
                     'progress_percent': percentage,
                     'current': current,
                     'total': total,
@@ -909,7 +915,7 @@ def run_db_scan_task(target, deep_scan):
         )
         
         # Emit completion
-        emit('db_scan_progress', {
+        socketio.emit('db_scan_progress', {
             'progress_percent': 100,
             'current': 1,
             'total': 1,
@@ -917,9 +923,9 @@ def run_db_scan_task(target, deep_scan):
         })
         
         if results:
-            emit('db_scan_log', {'message': f"✓ Scan completed successfully!"})
-            emit('db_scan_log', {'message': f"Found {len(results)} vulnerability(ies)"})
-            emit('db_scan_log', {'message': ""})
+            socketio.emit('db_scan_log', {'message': f"Scan completed successfully!"})
+            socketio.emit('db_scan_log', {'message': f"Found {len(results)} vulnerability(ies)"})
+            socketio.emit('db_scan_log', {'message': ""})
             
             # Count vulnerabilities by risk
             critical_count = sum(1 for r in results if r.get('risk') == 'Critical')
@@ -928,18 +934,18 @@ def run_db_scan_task(target, deep_scan):
             low_count = sum(1 for r in results if r.get('risk') == 'Low')
             
             if critical_count > 0:
-                emit('db_scan_log', {'message': f"🔴 Critical: {critical_count}"})
+                socketio.emit('db_scan_log', {'message': f"[CRITICAL] Critical: {critical_count}"})
             if high_count > 0:
-                emit('db_scan_log', {'message': f"🟠 High: {high_count}"})
+                socketio.emit('db_scan_log', {'message': f"[HIGH] High: {high_count}"})
             if medium_count > 0:
-                emit('db_scan_log', {'message': f"🟡 Medium: {medium_count}"})
+                socketio.emit('db_scan_log', {'message': f"[MEDIUM] Medium: {medium_count}"})
             if low_count > 0:
-                emit('db_scan_log', {'message': f"🟢 Low: {low_count}"})
+                socketio.emit('db_scan_log', {'message': f"[LOW] Low: {low_count}"})
         else:
-            emit('db_scan_log', {'message': "✅ No vulnerabilities detected!"})
+            socketio.emit('db_scan_log', {'message': "No vulnerabilities detected!"})
         
         # Emit completion with all results
-        emit('db_scan_complete', {
+        socketio.emit('db_scan_complete', {
             'target': target,
             'total_vulnerabilities': len(results),
             'results': results
@@ -954,14 +960,21 @@ def run_db_scan_task(target, deep_scan):
         logger.error(traceback.format_exc())
         
         try:
-            emit('db_scan_log', {'message': f"❌ Error: {str(e)}"})
-            emit('db_scan_complete', {'target': target, 'total_vulnerabilities': 0, 'results': []})
+            socketio.emit('db_scan_log', {'message': f"[ERROR] {str(e)}"})
+
+            socketio.emit('db_scan_complete', {'target': target, 'total_vulnerabilities': 0, 'results': []})
         except Exception as emit_error:
             logger.error(f"Failed to emit error message: {emit_error}")
 
 if __name__ == '__main__':
-    print("VulnX Professional Edition starting...")
-    print(f"📍 History file location: {HISTORY_FILE}")
-    print("📍 URL: http://127.0.0.1:5000")
-    socketio.run(app, host='127.0.0.1', port=5001, debug=True, allow_unsafe_werkzeug=True)
+    PORT = int(os.environ.get('PORT', 5000))
+    HOST = os.environ.get('HOST', '127.0.0.1')
+    print("="*60)
+    print("🚀 VulnX Professional Security Scanner")
+    print("="*60)
+    print(f"📍 URL: http://{HOST}:{PORT}")
+    print(f"📝 History file: {HISTORY_FILE}")
+    print("="*60)
+    print("Press CTRL+C to stop the server\n")
+    socketio.run(app, host=HOST, port=PORT, debug=True, allow_unsafe_werkzeug=True)
 

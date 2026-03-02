@@ -8,7 +8,12 @@ function getDbSocket() {
             console.error('Socket.IO library not loaded');
             throw new Error('Socket.IO library not available');
         }
-        dbSocket = io();
+        dbSocket = io({
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            reconnectionAttempts: 5
+        });
         setupDbSocketListeners();
     }
     return dbSocket;
@@ -23,19 +28,24 @@ function setupDbSocketListeners() {
 
     dbSocket.on('db_scan_progress', (data) => {
         const progress = data.progress_percent ? `[${data.progress_percent}%]` : '';
-        addDbTerminalLine(`${data.message} ${progress}`);
+        if (data.message) {
+            addDbTerminalLine(`${data.message} ${progress}`);
+        }
         updateDbProgress(data.progress_percent || 0, `${data.current}/${data.total} checks completed`);
     });
 
     dbSocket.on('db_scan_complete', (data) => {
         updateDbProgress(100, 'Scan complete');
-        addDbTerminalLine(`\n✅ Scan completed! Found ${data.total_vulnerabilities} vulnerability(ies).`);
+        addDbTerminalLine(`Scan completed! Found ${data.total_vulnerabilities} vulnerability(ies).`);
         
         const btn = document.getElementById('dbScanBtn');
         btn.disabled = false;
-        btn.innerText = 'Scan for Vulnerabilities';
+        btn.innerHTML = '<i data-lucide="scan" style="display: inline-block; width: 16px; height: 16px; vertical-align: -2px; margin-right: 6px;"></i> Scan for Vulnerabilities';
         btn.style.opacity = '1';
         btn.style.cursor = 'pointer';
+        
+        // Reinitialize lucide icons
+        if (typeof lucide !== 'undefined') lucide.createIcons();
         
         currentResults = data.results;
         renderDbResults(data.results);
@@ -52,9 +62,10 @@ function renderDbResults(results) {
     if (results.length === 0) {
         container.innerHTML = `
             <div style="text-align: center; padding: 40px; background: rgba(16, 185, 129, 0.05); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.2);">
-                <p style="color: var(--accent); font-weight: 600; font-size: 1.1em;">✅ No vulnerabilities detected!</p>
+                <p style="color: var(--accent); font-weight: 600; font-size: 1.1em;"><i data-lucide="shield-check" style="display: inline-block; width: 20px; height: 20px; vertical-align: -4px; margin-right: 6px;"></i> No vulnerabilities detected!</p>
                 <p style="color: var(--text-secondary); margin-top: 8px;">Your application appears to have good security controls.</p>
             </div>`;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
         return;
     }
 
@@ -123,13 +134,21 @@ function addDbTerminalLine(message) {
 }
 
 function updateDbProgress(percentage, message = '') {
+    const container = document.getElementById('dbProgressContainer');
     const fillEl = document.getElementById('dbProgressFill');
     const percentEl = document.getElementById('dbProgressPercent');
     const msgEl = document.getElementById('dbProgressMessage');
+    const textEl = document.getElementById('dbProgressText');
     
+    if (container) container.style.display = 'block';
     if (fillEl) fillEl.style.width = percentage + '%';
     if (percentEl) percentEl.textContent = percentage + '%';
     if (msgEl && message) msgEl.textContent = message;
+    
+    if (percentage >= 100 && textEl) {
+        textEl.innerHTML = '<i data-lucide="check-circle" style="display: inline-block; width: 14px; height: 14px; vertical-align: -2px; margin-right: 6px;"></i> Complete';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
 }
 
 function startDbScan(event) {
@@ -147,16 +166,21 @@ function startDbScan(event) {
     const btn = document.getElementById('dbScanBtn');
 
     btn.disabled = true;
-    btn.innerText = 'Scanning...';
+    btn.innerHTML = '<i data-lucide="loader" class="spin-icon" style="display: inline-block; width: 16px; height: 16px; vertical-align: -2px; margin-right: 6px;"></i> Scanning...';
     btn.style.opacity = '0.6';
     btn.style.cursor = 'not-allowed';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 
     // Show and reset terminal
     const terminal = document.getElementById('dbTerminal');
-    terminal.innerHTML = '<div style="color: var(--accent);">> Initializing database vulnerability scan...</div>';
+    terminal.innerHTML = '<div style="color: var(--accent);">\> Initializing database vulnerability scan...</div>';
     document.getElementById('dbProgressContainer').style.display = 'block';
     document.getElementById('dbSummaryContainer').style.display = 'none';
     updateDbProgress(0);
+    // Reset progress text
+    const textEl = document.getElementById('dbProgressText');
+    if (textEl) textEl.innerHTML = '<i data-lucide="loader" class="spin-icon" style="display: inline-block; width: 14px; height: 14px; vertical-align: -2px; margin-right: 6px;"></i> Scanning...';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 
     // Clear previous results
     document.getElementById('dbResultsContainer').innerHTML = '';
@@ -194,7 +218,7 @@ function initializeDbScannerPage() {
     console.log('Initializing database vulnerability scanner...');
     
     // Check if the form exists before initializing
-    const form = document.querySelector('form');
+    const form = document.getElementById('dbScanForm');
     if (!form) {
         console.warn('Database scanner form not found - page might not be fully loaded');
         return;
@@ -207,9 +231,6 @@ function initializeDbScannerPage() {
         console.error('Failed to initialize socket:', error);
         return;
     }
-    
-    // Handle form submission
-    form.addEventListener('submit', startDbScan);
     
     console.log('Database vulnerability scanner initialized');
 }

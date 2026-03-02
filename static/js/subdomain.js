@@ -3,7 +3,12 @@ let subdomainSocket = null;
 
 function getSubdomainSocket() {
     if (!subdomainSocket) {
-        subdomainSocket = io();
+        subdomainSocket = io({
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            reconnectionAttempts: 5
+        });
         setupSubdomainSocketListeners();
     }
     return subdomainSocket;

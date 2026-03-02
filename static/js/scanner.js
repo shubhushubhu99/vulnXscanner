@@ -1,9 +1,22 @@
 let socket;
 
 function initSocket() {
-    socket = io();
+    socket = io({
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        reconnectionAttempts: 5
+    });
 
     socket.on('connect', () => console.log('WebSocket connected'));
+    
+    socket.on('connect_error', (error) => {
+        console.error('WebSocket connection error:', error);
+    });
+    
+    socket.on('disconnect', (reason) => {
+        console.warn('WebSocket disconnected:', reason);
+    });
 
     socket.on('scan_log', (data) => addTerminalLine(data.message));
 
