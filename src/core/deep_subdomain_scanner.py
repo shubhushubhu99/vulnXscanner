@@ -65,7 +65,7 @@ class DeepSubdomainScanner:
         self.results: Set[SubdomainResult] = set()
         self.found_subdomains: Set[str] = set()
         self.wildcard_ip = None
-        self.max_workers = 150 if self.use_deep_scan else 50
+        self.max_workers = 800 if self.use_deep_scan else 200
         self.timeout = 5
         
         # Get wordlist path

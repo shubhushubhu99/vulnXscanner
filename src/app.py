@@ -12,6 +12,7 @@ from core.scanner import resolve_target, scan_target, check_subdomain
 from core.reporter import generate_pdf_report
 from core.deep_subdomain_scanner import scan_subdomains_blocking
 from core.database_vulnerability_scanner import scan_database_vulnerabilities_blocking
+from core.directory_scanner import scan_directories_blocking
 import json
 import os
 import secrets
@@ -235,6 +236,31 @@ def subdomain_page():
                 message = "❌ Scan error: " + str(e)
     
     return render_template('subdomain.html', subdomains=subdomains, message=message, active_page='subdomain')
+
+@app.route('/directory', methods=['GET', 'POST'])
+def directory_page():
+    """Directory finder page"""
+    directories = []
+    message = ""
+    deep_scan = False
+
+    if request.method == "POST":
+        target = request.form.get("target", "").strip()
+        deep_scan = request.form.get("deep_scan") == "on"
+
+        if target:
+            try:
+                results = scan_directories_blocking(target, deep_scan=deep_scan)
+                if results:
+                    directories = results
+                    message = f"✅ Found {len(directories)} path(s)"
+                else:
+                    message = "❌ No directories detected"
+            except Exception as e:
+                logger.error(f"Directory scan error: {e}")
+                message = "❌ Scan error: " + str(e)
+
+    return render_template('directory.html', directories=directories, message=message, active_page='directory')
 
 @app.route('/database-vulnerability', methods=['GET', 'POST'])
 def database_vulnerability_page():
@@ -854,6 +880,92 @@ def run_subdomain_scan_task(domain, deep_scan):
         try:
             socketio.emit('subdomain_log', {'message': f"❌ Error: {str(e)}"})
             socketio.emit('scan_complete', {'domain': domain, 'total_found': 0, 'results': []})
+        except Exception as emit_error:
+            logger.error(f"Failed to emit error message: {emit_error}")
+
+# ============================================================================
+# DIRECTORY SCANNING
+# ============================================================================
+
+@socketio.on('start_dir_scan')
+def handle_dir_scan(data):
+    target = data.get('target')
+    deep_scan = data.get('deep_scan', False)
+
+    socketio.start_background_task(run_dir_scan_task, target, deep_scan)
+
+def run_dir_scan_task(target, deep_scan):
+    print(f"Starting background directory scan for: {target}")
+
+    try:
+        if deep_scan:
+            socketio.emit('dir_scan_log', {'message': "DEEP SCAN MODE: Full directory brute-force with extensions"})
+            socketio.emit('dir_scan_log', {'message': "Scanning with 20+ extensions, recursive discovery & soft-404 detection"})
+        else:
+            socketio.emit('dir_scan_log', {'message': "STANDARD SCAN: Checking common directories"})
+
+        socketio.emit('dir_scan_log', {'message': ""})
+        socketio.emit('dir_scan_log', {'message': f"Target: {target}"})
+        socketio.emit('dir_scan_log', {'message': ""})
+
+        def progress_callback(progress_data):
+            try:
+                percentage = progress_data.get('percentage', 0)
+                current = progress_data.get('current', 0)
+                total = progress_data.get('total', 1)
+                message = progress_data.get('message', '')
+
+                socketio.emit('dir_scan_progress', {
+                    'progress_percent': percentage,
+                    'current': current,
+                    'total': total,
+                    'current_path': message
+                })
+            except Exception as e:
+                logger.error(f"Error in dir progress callback: {e}")
+
+        results = scan_directories_blocking(target, deep_scan=deep_scan, progress_callback=progress_callback)
+
+        socketio.emit('dir_scan_progress', {
+            'progress_percent': 100,
+            'current': len(results),
+            'total': len(results),
+            'current_path': 'Finalizing results'
+        })
+
+        if results:
+            socketio.emit('dir_scan_log', {'message': f"✓ Scan completed successfully!"})
+            socketio.emit('dir_scan_log', {'message': f"Found {len(results)} path(s)"})
+            socketio.emit('dir_scan_log', {'message': ""})
+
+            for result in results:
+                try:
+                    if isinstance(result, dict):
+                        socketio.emit('dir_found', {
+                            'path': result.get('path', ''),
+                            'status_code': result.get('status_code'),
+                            'status_text': result.get('status_text', 'Found')
+                        })
+                except Exception as e:
+                    logger.error(f"Error emitting dir result: {e}")
+        else:
+            socketio.emit('dir_scan_log', {'message': "No directories found"})
+
+        socketio.emit('dir_scan_complete', {
+            'target': target,
+            'total_found': len(results),
+            'results': results
+        })
+        print(f"Directory scan completed for {target}. Found {len(results)} results")
+
+    except Exception as e:
+        print(f"Error during directory scan: {e}")
+        logger.error(f"Directory scan error: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        try:
+            socketio.emit('dir_scan_log', {'message': f"❌ Error: {str(e)}"})
+            socketio.emit('dir_scan_complete', {'target': target, 'total_found': 0, 'results': []})
         except Exception as emit_error:
             logger.error(f"Failed to emit error message: {emit_error}")
 
