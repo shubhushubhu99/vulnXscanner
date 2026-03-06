@@ -95,10 +95,50 @@ function renderDbResults(results) {
         recommendation.className = 'vuln-recommendation';
         recommendation.textContent = vuln.recommendation || 'Review security best practices';
 
+        // Create AI Analysis Button
+        const aiHint = document.createElement('div');
+        aiHint.className = 'ai-hint';
+        aiHint.setAttribute('role', 'button');
+        aiHint.setAttribute('tabindex', '0');
+        aiHint.innerHTML = `
+            <svg class="ai-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 2l1.5 3.3L17 6l-3 2.2L14 11l-2-1.6L10 11l.9-2.8L8 6l3.5-.7L12 2z"></path>
+                <path d="M5 12l.7 1.6L7.5 14l-1.8 1.1L5 16.5 4.3 15.1 3 14l1.3-1 1.7-.6z"></path>
+                <path d="M20 12l.5 1.1L21.5 14l-1.3.8L20 16l-.5-1.2L18 14l1.5-1.8L20 12z"></path>
+            </svg>
+            <span>Click for AI expert analysis</span>
+        `;
+        
+        // Add click handler to AI button
+        aiHint.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (typeof window.showDatabaseVulnerabilityAnalysis === 'function') {
+                window.showDatabaseVulnerabilityAnalysis(
+                    vuln.name,
+                    vuln.description,
+                    vuln.evidence || 'N/A',
+                    vuln.risk,
+                    vuln.recommendation || 'Review security best practices'
+                );
+            } else {
+                console.error('AI analysis function not available');
+                alert('AI analysis feature is not ready. Please refresh the page.');
+            }
+        });
+        
+        // Add keyboard support
+        aiHint.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                aiHint.click();
+            }
+        });
+
         card.appendChild(header);
         card.appendChild(description);
         card.appendChild(evidence);
         card.appendChild(recommendation);
+        card.appendChild(aiHint);
         grid.appendChild(card);
     });
 
