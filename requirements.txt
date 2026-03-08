@@ -10,4 +10,4 @@ google-generativeai
 google-genai
 python-dotenv
 dnspython==2.6.1
-import aiohttp
+aiohttp
