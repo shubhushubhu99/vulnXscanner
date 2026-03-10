@@ -974,92 +974,92 @@ The project follows industry best practices for Python web applications:
 
 The project follows a clean, modular architecture with clear separation of concerns:
 
-```text
-vulnXscanner/
+```bash
+📁 vulnXscanner/
 │
-├── src/                          # Source code directory
-│   ├── app.py                    # Main Flask application
-│   │                             # - Route handlers (/, /dashboard, /history, /subdomain)
-│   │                             # - WebSocket event handlers
-│   │                             # - AI analysis endpoint (/ai_analysis)
-│   │                             # - PDF export endpoint (/export/<scan_id>)
-│   │                             # - History management
+├── 💻 src/                              # Source code directory
+│   ├── 🚀 app.py                         # Main Flask application
+│   │                                     # - Route handlers (/, /dashboard, /history, /subdomain)
+│   │                                     # - WebSocket event handlers
+│   │                                     # - AI analysis endpoint (/ai_analysis)
+│   │                                     # - PDF export endpoint (/export/<scan_id>)
+│   │                                     # - History management
 │   │
-│   └── core/                     # Core functionality modules
-│       ├── scanner.py            # Scanning engine
-│       │                         # - IPv4/IPv6 address validation
-│       │                         # - DNS resolution (IPv4/IPv6)
-│       │                         # - Multi-threaded port scanning
-│       │                         # - Banner grabbing
-│       │                         # - Service detection & mapping
+│   └── 🧠 core/                          # Core functionality modules
+│       ├── 🔎 scanner.py                 # Scanning engine
+│       │                                 # - IPv4/IPv6 address validation
+│       │                                 # - DNS resolution (IPv4/IPv6)
+│       │                                 # - Multi-threaded port scanning
+│       │                                 # - Banner grabbing
+│       │                                 # - Service detection & mapping
 │       │
-│       └── reporter.py            # PDF report generation
-│                                 # - ReportLab integration
-│                                 # - Professional report formatting
+│       └── 📄 reporter.py                # PDF report generation
+│                                         # - ReportLab integration
+│                                         # - Professional report formatting
 │
-├── static/                       # Static assets
-│   ├── css/
-│   │   ├── main.css             # Main application styles
-│   │   │                        # - Dark theme
-│   │   │                        # - Card layouts
-│   │   │                        # - Animations
-│   │   │                        # - AI modal styles
+├── 🎨 static/                            # Static assets
+│   ├── 🎨 css/
+│   │   ├── 🖌️ main.css                   # Main application styles
+│   │   │                                 # - Dark theme
+│   │   │                                 # - Card layouts
+│   │   │                                 # - Animations
+│   │   │                                 # - AI modal styles
 │   │   │
-│   │   └── landing.css          # Landing page styles
+│   │   └── 🌐 landing.css                # Landing page styles
 │   │
-│   ├── js/
-│   │   ├── main.js              # AI analysis integration
-│   │   │                        # - Gemini API calls
-│   │   │                        # - Modal management
-│   │   │                        # - Typewriter effect
+│   ├── 📜 js/
+│   │   ├── 🤖 main.js                    # AI analysis integration
+│   │   │                                 # - Gemini API calls
+│   │   │                                 # - Modal management
+│   │   │                                 # - Typewriter effect
 │   │   │
-│   │   └── scanner.js           # WebSocket client
-│   │                            # - Socket.IO integration
-│   │                            # - Real-time event handling
-│   │                            # - Result rendering
+│   │   └── 🔌 scanner.js                 # WebSocket client
+│   │                                     # - Socket.IO integration
+│   │                                     # - Real-time event handling
+│   │                                     # - Result rendering
 │   │
-│   └── images/
-│       └── hero.png             # Hero image for landing page
+│   └── 🖼️ images/
+│       └── 🌄 hero.png                   # Landing page hero image
 │
-├── templates/                    # Jinja2 templates
-│   ├── base.html                # Base template with navigation
-│   ├── landing.html             # Landing/home page
-│   ├── dashboard.html           # Main scanning interface
-│   ├── history.html             # Scan history page
-│   └── subdomain.html           # Subdomain enumeration page
+├── 📄 templates/                         # Jinja2 templates
+│   ├── 🧩 base.html                      # Base layout with navigation
+│   ├── 🏠 landing.html                   # Landing / home page
+│   ├── 📊 dashboard.html                 # Main scanning interface
+│   ├── 🕘 history.html                   # Scan history page
+│   └── 🌐 subdomain.html                 # Subdomain enumeration page
 │
-├── tests/                        # Test suite
-│   ├── __init__.py              # Python package marker
-│   └── test_scanner.py          # Comprehensive test suite
-│                                 # - 19 test cases
-│                                 # - IPv4/IPv6 validation tests
-│                                 # - Address family detection
-│                                 # - Backward compatibility tests
+├── 🧪 tests/                             # Test suite
+│   ├── 📦 __init__.py                    # Python package marker
+│   └── 🔬 test_scanner.py                # Scanner test suite
+│                                         # - 19 test cases
+│                                         # - IPv4/IPv6 validation
+│                                         # - Address family detection
+│                                         # - Backward compatibility
 │
-├── docs/                         # Documentation
-│   ├── overview.md              # Project overview
-│   └── architecture.md          # Architecture details
+├── 📚 docs/                              # Documentation
+│   ├── 📖 overview.md                    # Project overview
+│   └── 🏗️ architecture.md                # System architecture
 │
-├── Config/                       # Deployment configuration
-│   ├── Procfile                 # Process file for deployment
-│   └── .runtime.txt             # Runtime specification
+├── ⚙️ Config/                            # Deployment configuration
+│   ├── 🚀 Procfile                       # Process file for deployment
+│   └── 🧾 .runtime.txt                   # Runtime specification
 │
-├── Images/                       # Screenshots and images
-│   └── Screenshot_*.png         # Application screenshots
+├── 🖼️ Images/                            # Screenshots
+│   └── 📸 Screenshot_*.png               # Application screenshots
 │
-├── Dockerfile                    # Docker container configuration
-├── requirements.txt             # Python dependencies
-│                                 # - Flask & Flask-SocketIO
-│                                 # - Google Gemini SDK
-│                                 # - ReportLab
-│                                 # - python-dotenv
+├── 🐳 Dockerfile                         # Docker container configuration
+├── 📦 requirements.txt                   # Python dependencies
+│                                         # - Flask & Flask-SocketIO
+│                                         # - Google Gemini SDK
+│                                         # - ReportLab
+│                                         # - python-dotenv
 │
-├── scan_history.json            # Generated scan history (gitignored)
-├── test_gemini.py               # Gemini API test script
-├── TEST_RESULTS.md              # Test execution results
-├── CODE_OF_CONDUCT.md           # Code of conduct
-├── CONTRIBUTING.md              # Contribution guidelines
-└── README.md                    # This file
+├── 🗂️ scan_history.json                  # Generated scan history (gitignored)
+├── 🧪 test_gemini.py                     # Gemini API test script
+├── 📊 TEST_RESULTS.md                    # Test results
+├── 📜 CODE_OF_CONDUCT.md                 # Community guidelines
+├── 🤝 CONTRIBUTING.md                    # Contribution guide
+└── 📘 README.md                          # Project documentation
 ```
 
 ### Architecture Principles
