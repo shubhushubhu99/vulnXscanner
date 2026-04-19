@@ -1,4 +1,4 @@
-import subprocess
+
 
 class WhoisLookup:
     @staticmethod

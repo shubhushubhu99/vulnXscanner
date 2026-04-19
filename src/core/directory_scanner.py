@@ -10,13 +10,12 @@ Directory Scanner with Deep Scan capabilities
 """
 
 import requests
-import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import List, Dict, Tuple, Set
+from typing import List, Dict, Set
 import time
 import logging
 from pathlib import Path
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 
 logger = logging.getLogger("vulnx.directory_scanner")
 
