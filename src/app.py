@@ -1,15 +1,15 @@
 from datetime import datetime
-import importlib.util
 import sys
 from pathlib import Path
+
 
 # Add src directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from flask_socketio import SocketIO, emit
-from core.scanner import resolve_target, scan_target, check_subdomain
-from core.reporter import generate_pdf_report, generate_analysis_pdf
+from core.scanner import resolve_target, scan_target
+from core.reporter import generate_pdf_report
 from core.deep_subdomain_scanner import scan_subdomains_blocking
 from core.database_vulnerability_scanner import scan_database_vulnerabilities_blocking
 from core.directory_scanner import scan_directories_blocking
@@ -596,25 +596,115 @@ def download_report():
         return jsonify({'success': False, 'error': 'No analysis provided'}), 400
     
     try:
-        # Determine if this is a Port or a Database vulnerability based on data keys
-        if 'port' in data:
-            title = f"VulnX Security Analysis: Port {data.get('port')}"
-            metadata = {
-                'Port': data.get('port', 'Unknown'),
-                'Service': data.get('service', 'Unknown')
-            }
-            filename = f"VulnX_Analysis_Port_{data.get('port')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-        elif 'name' in data:
-            title = f"VulnX Database Analysis: {data.get('name')}"
-            metadata = {
-                'Vulnerability': data.get('name', 'Unknown'),
-                'Risk Level': data.get('risk', 'Low')
-            }
-            filename = f"VulnX_DB_Analysis_{data.get('name').replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-        else:
-            title = "VulnX Security Analysis Report"
-            metadata = {'Target': 'Generic Analysis'}
-            filename = f"VulnX_Analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        from io import BytesIO
+        
+        # Try to import reportlab for PDF generation
+        try:
+            from reportlab.lib.pagesizes import letter
+            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+            from reportlab.lib.units import inch
+            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+            from reportlab.lib import colors
+            
+            # Create PDF in memory
+            pdf_buffer = BytesIO()
+            doc = SimpleDocTemplate(pdf_buffer, pagesize=letter)
+            story = []
+            
+            # Define styles
+            styles = getSampleStyleSheet()
+            title_style = ParagraphStyle(
+                'CustomTitle',
+                parent=styles['Heading1'],
+                fontSize=24,
+                textColor=colors.HexColor('#10b981'),
+                spaceAfter=30,
+                alignment=1  # Center
+            )
+            
+            heading_style = ParagraphStyle(
+                'CustomHeading',
+                parent=styles['Heading2'],
+                fontSize=14,
+                textColor=colors.HexColor('#10b981'),
+                spaceAfter=12,
+                spaceBefore=12
+            )
+            
+            # Add header
+            story.append(Paragraph('VulnX Security Analysis Report', title_style))
+            story.append(Spacer(1, 0.2*inch))
+            
+            # Add metadata table
+            metadata = [
+                ['Port', str(port)],
+                ['Service', str(service)],
+                ['Generated', datetime.now().strftime('%Y-%m-%d %H:%M:%S')],
+                ['Tool', 'VulnX AI Scanner']
+            ]
+            
+            metadata_table = Table(metadata, colWidths=[1.5*inch, 4*inch])
+            metadata_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f0fdf4')),
+                ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#0d3f2a')),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+                ('TOPPADDING', (0, 0), (-1, -1), 8),
+                ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#d1d5db'))
+            ]))
+            
+            story.append(metadata_table)
+            story.append(Spacer(1, 0.3*inch))
+            
+            # Add analysis heading
+            story.append(Paragraph('AI Security Analysis', heading_style))
+            
+            # Format analysis text into readable paragraphs
+            analysis_paragraphs = analysis_text.split('\n')
+            for para in analysis_paragraphs:
+                if para.strip():
+                    story.append(Paragraph(para.strip(), styles['Normal']))
+                    story.append(Spacer(1, 0.05*inch))
+            
+            # Add footer
+            story.append(Spacer(1, 0.3*inch))
+            story.append(Paragraph(
+                '<font size=8 color="#999999">Report generated by VulnX AI Security Scanner | Powered by Google Gemini</font>',
+                styles['Normal']
+            ))
+            
+            # Build PDF
+            doc.build(story)
+            pdf_buffer.seek(0)
+            
+            return send_file(
+                pdf_buffer,
+                mimetype='application/pdf',
+                as_attachment=True,
+                download_name=f'VulnX_Analysis_Port_{port}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
+            )
+            
+        except ImportError:
+            # Fallback to TXT format if reportlab not available
+            logger.info('reportlab not available, generating TXT report instead')
+            
+            report_content = f"""{'='*70}
+VulnX SECURITY ANALYSIS REPORT
+{'='*70}
+
+SCAN DETAILS:
+Port: {port}
+Service: {service}
+Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Tool: VulnX AI Scanner
+
+{'='*70}
+AI ANALYSIS:
+{'='*70}
+
+{analysis_text}
 
         # Generate PDF using refactored core engine
         pdf_buffer = generate_analysis_pdf(analysis_text, metadata, title=title)
