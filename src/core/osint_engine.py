@@ -1,5 +1,4 @@
-import socket
-import requests
+
 
 class OSINTEngine:
     def __init__(self, target):

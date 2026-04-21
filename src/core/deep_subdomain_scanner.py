@@ -9,14 +9,10 @@ Enhanced Subdomain Scanner with Deep Scan capabilities
 - Progress tracking
 """
 
-import socket
 import dns.resolver
 import dns.exception
 import requests
-import asyncio
-import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from urllib.parse import urljoin
 from typing import List, Dict, Tuple, Set
 import time
 import logging

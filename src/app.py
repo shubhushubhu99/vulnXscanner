@@ -1,14 +1,14 @@
 from datetime import datetime
-import importlib.util
 import sys
 from pathlib import Path
+
 
 # Add src directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from flask_socketio import SocketIO, emit
-from core.scanner import resolve_target, scan_target, check_subdomain
+from core.scanner import resolve_target, scan_target
 from core.reporter import generate_pdf_report
 from core.deep_subdomain_scanner import scan_subdomains_blocking
 from core.database_vulnerability_scanner import scan_database_vulnerabilities_blocking
@@ -605,7 +605,7 @@ def download_report():
             from reportlab.lib.pagesizes import letter
             from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
             from reportlab.lib.units import inch
-            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Table, TableStyle
+            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
             from reportlab.lib import colors
             
             # Create PDF in memory
