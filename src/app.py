@@ -80,6 +80,39 @@ app.config['SECRET_KEY'] = (
     or os.environ.get('SECRET_KEY')
     or secrets.token_hex(32)
 )
+@app.after_request
+
+def add_security_headers(response):
+
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+
+    response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
+
+    response.headers['Content-Security-Policy'] = (
+
+        "default-src 'self'; "
+
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.socket.io; "
+
+        "style-src 'self' 'unsafe-inline'; "
+
+        "img-src 'self' data:; "
+
+        "connect-src 'self' wss: ws:; "
+
+        "font-src 'self';"
+
+    )
+
+    return response
 # Use threading mode for broad compatibility
 # Configure with longer timeouts and ping/pong to keep connection alive during long scans
 socketio = SocketIO(
