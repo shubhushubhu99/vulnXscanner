@@ -1,7 +1,74 @@
 
 // main.js - Real Gemini AI Analysis Modal
 // Define AI analysis function 
-async function showDetailedAnalysis(port, service, banner, severity) {
+// Convert HTML response into clean plain text while preserving headings, lists and line breaks
+function htmlToPlainText(html) {
+    // If response is already plain text (no HTML tags), return as-is
+    if (!html || typeof html !== 'string') {
+        return String(html || '');
+    }
+    
+    // Quick check: if no HTML tags detected, return plain text as-is
+    if (!/<[^>]*>/g.test(html)) {
+        return html.trim();
+    }
+    
+    // Has HTML tags, so parse and convert
+    const container = document.createElement('div');
+    container.innerHTML = html;
+
+    function walk(node) {
+        let out = '';
+        node.childNodes.forEach((child) => {
+            if (child.nodeType === Node.TEXT_NODE) {
+                const text = child.nodeValue || '';
+                out += text;
+            } else if (child.nodeType === Node.ELEMENT_NODE) {
+                const tag = child.tagName.toLowerCase();
+                if (/^h[1-6]$/.test(tag)) {
+                    // Headings: uppercase plaintext with spacing
+                    const text = (child.innerText || '').trim();
+                    if (text) out += '\n\n' + text.toUpperCase() + '\n\n';
+                } else if (tag === 'p') {
+                    // Paragraphs: with spacing
+                    const text = (child.innerText || '').trim();
+                    if (text) out += '\n\n' + text + '\n\n';
+                } else if (tag === 'br') {
+                    // Line breaks
+                    out += '\n';
+                } else if (tag === 'li') {
+                    // List items: bullet format
+                    const text = (child.innerText || '').trim();
+                    if (text) out += '- ' + text + '\n';
+                } else if (tag === 'ul' || tag === 'ol') {
+                    // Lists: extract items
+                    child.childNodes.forEach((li) => {
+                        if (li.tagName && li.tagName.toLowerCase() === 'li') {
+                            const text = (li.innerText || '').trim();
+                            if (text) out += '- ' + text + '\n';
+                        }
+                    });
+                    out += '\n';
+                } else if (tag === 'pre' || tag === 'code') {
+                    // Code blocks: preserve
+                    const text = child.innerText || '';
+                    if (text) out += '\n\n' + text + '\n\n';
+                } else {
+                    // Recursively process other tags
+                    out += walk(child);
+                }
+            }
+        });
+        return out;
+    }
+
+    const text = walk(container)
+        .replace(/\n{3,}/g, '\n\n')  // Collapse excess newlines
+        .trim();
+    return text;
+}
+
+async function executeAIAnalysis(config) {
     const modal = document.createElement('div');
     modal.className = 'ai-modal';
     modal.innerHTML = `
@@ -26,10 +93,10 @@ async function showDetailedAnalysis(port, service, banner, severity) {
     const loadingElement = modal.querySelector('.ai-loading');
 
     try {
-        const response = await fetch('/ai_analysis', {
+        const response = await fetch(config.endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ port, service, banner, severity })
+            body: JSON.stringify(config.payload)
         });
 
         // Attempt to parse JSON response even when response.ok is false
@@ -61,73 +128,6 @@ async function showDetailedAnalysis(port, service, banner, severity) {
             throw new Error(msg);
         }
 
-        // Convert HTML response into clean plain text while preserving headings, lists and line breaks
-        function htmlToPlainText(html) {
-            // If response is already plain text (no HTML tags), return as-is
-            if (!html || typeof html !== 'string') {
-                return String(html || '');
-            }
-            
-            // Quick check: if no HTML tags detected, return plain text as-is
-            if (!/<[^>]*>/g.test(html)) {
-                return html.trim();
-            }
-            
-            // Has HTML tags, so parse and convert
-            const container = document.createElement('div');
-            container.innerHTML = html;
-
-            function walk(node) {
-                let out = '';
-                node.childNodes.forEach((child) => {
-                    if (child.nodeType === Node.TEXT_NODE) {
-                        const text = child.nodeValue || '';
-                        out += text;
-                    } else if (child.nodeType === Node.ELEMENT_NODE) {
-                        const tag = child.tagName.toLowerCase();
-                        if (/^h[1-6]$/.test(tag)) {
-                            // Headings: uppercase plaintext with spacing
-                            const text = (child.innerText || '').trim();
-                            if (text) out += '\n\n' + text.toUpperCase() + '\n\n';
-                        } else if (tag === 'p') {
-                            // Paragraphs: with spacing
-                            const text = (child.innerText || '').trim();
-                            if (text) out += '\n\n' + text + '\n\n';
-                        } else if (tag === 'br') {
-                            // Line breaks
-                            out += '\n';
-                        } else if (tag === 'li') {
-                            // List items: bullet format
-                            const text = (child.innerText || '').trim();
-                            if (text) out += '- ' + text + '\n';
-                        } else if (tag === 'ul' || tag === 'ol') {
-                            // Lists: extract items
-                            child.childNodes.forEach((li) => {
-                                if (li.tagName && li.tagName.toLowerCase() === 'li') {
-                                    const text = (li.innerText || '').trim();
-                                    if (text) out += '- ' + text + '\n';
-                                }
-                            });
-                            out += '\n';
-                        } else if (tag === 'pre' || tag === 'code') {
-                            // Code blocks: preserve
-                            const text = child.innerText || '';
-                            if (text) out += '\n\n' + text + '\n\n';
-                        } else {
-                            // Recursively process other tags
-                            out += walk(child);
-                        }
-                    }
-                });
-                return out;
-            }
-
-            const text = walk(container)
-                .replace(/\n{3,}/g, '\n\n')  // Collapse excess newlines
-                .trim();
-            return text;
-        }
-
         const plainText = htmlToPlainText(analysisHtml);
 
         // Hide loading and show output container (which has fixed height + scroll in CSS)
@@ -148,8 +148,8 @@ async function showDetailedAnalysis(port, service, banner, severity) {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         analysis: plainText,
-                        port: port,
-                        service: service
+                        port: config.pdf.mapData.port,
+                        service: config.pdf.mapData.service
                     })
                 });
                 
@@ -159,7 +159,7 @@ async function showDetailedAnalysis(port, service, banner, severity) {
                 
                 // Get the filename from response header if available
                 const contentDisposition = response.headers.get('content-disposition');
-                let filename = 'VulnX_Analysis_Report.pdf';
+                let filename = config.pdf.filename;
                 if (contentDisposition) {
                     const matches = contentDisposition.match(/filename="?(.+?)"?$/);
                     if (matches && matches[1]) filename = matches[1];
@@ -197,218 +197,45 @@ async function showDetailedAnalysis(port, service, banner, severity) {
             <p style="color: #e74c3c; font-size: 0.9em;">${error.message}</p>
             <p>Please try again or check your Gemini API connection.</p>
         `;
-        console.error('AI Analysis Error:', error);
+        console.error(config.errorLabel || 'AI Analysis Error:', error);
     }
+}
+
+function showDetailedAnalysis(port, service, banner, severity) {
+    executeAIAnalysis({
+        endpoint: '/ai_analysis',
+        payload: { port, service, banner, severity },
+        errorLabel: 'AI Analysis Error:',
+        pdf: {
+            mapData: { port, service },
+            filename: 'VulnX_Analysis_Report.pdf'
+        }
+    });
 }
 
 // Make function globally accessible AFTER declaration
 window.showDetailedAnalysis = showDetailedAnalysis;
 
 // Database Vulnerability AI Analysis Function
-async function showDatabaseVulnerabilityAnalysis(vulnName, vulnDescription, vulnEvidence, riskLevel, vulnRecommendation) {
-    const modal = document.createElement('div');
-    modal.className = 'ai-modal';
-    modal.innerHTML = `
-        <div class="ai-modal-content">
-            <div class="ai-loading">🤖 VulnX AI Security Analysis</div>
-            <div class="ai-analysis-output" style="display: none;"></div>
-            <div class="ai-modal-footer">
-                <button class="ai-download-btn" style="display: none; margin-right: 12px;">📥 Download Report</button>
-                <button class="ai-close-btn">Close Analysis</button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal || e.target.classList.contains('ai-close-btn')) {
-            modal.remove();
+function showDatabaseVulnerabilityAnalysis(vulnName, vulnDescription, vulnEvidence, riskLevel, vulnRecommendation) {
+    executeAIAnalysis({
+        endpoint: '/db_analysis',
+        payload: { 
+            name: vulnName, 
+            description: vulnDescription, 
+            evidence: vulnEvidence,
+            risk: riskLevel,
+            recommendation: vulnRecommendation
+        },
+        errorLabel: 'Database Vulnerability AI Analysis Error:',
+        pdf: {
+            mapData: { 
+                port: vulnName, 
+                service: riskLevel 
+            },
+            filename: 'VulnX_Database_Vulnerability_Report.pdf'
         }
     });
-
-    const outputElement = modal.querySelector('.ai-analysis-output');
-    const loadingElement = modal.querySelector('.ai-loading');
-
-    try {
-        const response = await fetch('/db_analysis', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                name: vulnName, 
-                description: vulnDescription, 
-                evidence: vulnEvidence,
-                risk: riskLevel,
-                recommendation: vulnRecommendation
-            })
-        });
-
-        // Attempt to parse JSON response even when response.ok is false
-        let data = null;
-        try {
-            data = await response.json();
-        } catch (e) {
-            // non-JSON body
-            data = null;
-        }
-
-        if (!response.ok) {
-            const msg = (data && (data.error || data.detail || data.message)) || `API error: ${response.status}`;
-            throw new Error(msg);
-        }
-
-        // Support both legacy shape ({ analysis_html }) and new shape ({ success: true, data: { analysis_html } })
-        let analysisHtml = '';
-        if (data) {
-            if (data.success === true && data.data) {
-                analysisHtml = data.data.analysis_html || data.data.analysis_text || '';
-            } else {
-                analysisHtml = data.analysis_html || data.analysis_text || '';
-            }
-        }
-
-        if (!analysisHtml) {
-            const msg = (data && (data.error || data.detail)) || 'No analysis returned from AI';
-            throw new Error(msg);
-        }
-
-        // Convert HTML response into clean plain text while preserving headings, lists and line breaks
-        function htmlToPlainText(html) {
-            // If response is already plain text (no HTML tags), return as-is
-            if (!html || typeof html !== 'string') {
-                return String(html || '');
-            }
-            
-            // Quick check: if no HTML tags detected, return plain text as-is
-            if (!/<[^>]*>/g.test(html)) {
-                return html.trim();
-            }
-            
-            // Has HTML tags, so parse and convert
-            const container = document.createElement('div');
-            container.innerHTML = html;
-
-            function walk(node) {
-                let out = '';
-                node.childNodes.forEach((child) => {
-                    if (child.nodeType === Node.TEXT_NODE) {
-                        const text = child.nodeValue || '';
-                        out += text;
-                    } else if (child.nodeType === Node.ELEMENT_NODE) {
-                        const tag = child.tagName.toLowerCase();
-                        if (/^h[1-6]$/.test(tag)) {
-                            // Headings: uppercase plaintext with spacing
-                            const text = (child.innerText || '').trim();
-                            if (text) out += '\n\n' + text.toUpperCase() + '\n\n';
-                        } else if (tag === 'p') {
-                            // Paragraphs: with spacing
-                            const text = (child.innerText || '').trim();
-                            if (text) out += '\n\n' + text + '\n\n';
-                        } else if (tag === 'br') {
-                            // Line breaks
-                            out += '\n';
-                        } else if (tag === 'li') {
-                            // List items: bullet format
-                            const text = (child.innerText || '').trim();
-                            if (text) out += '- ' + text + '\n';
-                        } else if (tag === 'ul' || tag === 'ol') {
-                            // Lists: extract items
-                            child.childNodes.forEach((li) => {
-                                if (li.tagName && li.tagName.toLowerCase() === 'li') {
-                                    const text = (li.innerText || '').trim();
-                                    if (text) out += '- ' + text + '\n';
-                                }
-                            });
-                            out += '\n';
-                        } else if (tag === 'pre' || tag === 'code') {
-                            // Code blocks: preserve
-                            const text = child.innerText || '';
-                            if (text) out += '\n\n' + text + '\n\n';
-                        } else {
-                            // Recursively process other tags
-                            out += walk(child);
-                        }
-                    }
-                });
-                return out;
-            }
-
-            const text = walk(container)
-                .replace(/\n{3,}/g, '\n\n')  // Collapse excess newlines
-                .trim();
-            return text;
-        }
-
-        const plainText = htmlToPlainText(analysisHtml);
-
-        // Hide loading and show output container (which has fixed height + scroll in CSS)
-        loadingElement.style.display = 'none';
-        outputElement.style.display = 'block';
-        
-        // Store data for download button and show it
-        const downloadBtn = modal.querySelector('.ai-download-btn');
-        downloadBtn.style.display = 'inline-block';
-        
-        downloadBtn.addEventListener('click', async () => {
-            downloadBtn.disabled = true;
-            downloadBtn.textContent = '⏳ Generating PDF...';
-            
-            try {
-                const response = await fetch('/download_report', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        analysis: plainText,
-                        port: vulnName,
-                        service: riskLevel
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`Download failed: ${response.status}`);
-                }
-                
-                // Get the filename from response header if available
-                const contentDisposition = response.headers.get('content-disposition');
-                let filename = 'VulnX_Database_Vulnerability_Report.pdf';
-                if (contentDisposition) {
-                    const matches = contentDisposition.match(/filename="?(.+?)"?$/);
-                    if (matches && matches[1]) filename = matches[1];
-                }
-                
-                // Trigger download
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-                
-                downloadBtn.textContent = '📥 Download Report';
-                downloadBtn.disabled = false;
-            } catch (error) {
-                console.error('Download error:', error);
-                downloadBtn.textContent = '❌ Download Failed';
-                downloadBtn.disabled = false;
-                setTimeout(() => {
-                    downloadBtn.textContent = '📥 Download Report';
-                }, 3000);
-            }
-        });
-
-        // Start typing animation
-        typeWriter(outputElement, plainText, 18);
-
-    } catch (error) {
-        loadingElement.innerHTML = `
-            <p style="color: var(--critical);">Failed to load AI analysis</p>
-            <p style="color: #e74c3c; font-size: 0.9em;">${error.message}</p>
-            <p>Please try again or check your Gemini API connection.</p>
-        `;
-        console.error('Database Vulnerability AI Analysis Error:', error);
-    }
 }
 
 // Make database vulnerability analysis function globally accessible
