@@ -201,12 +201,25 @@ body {
 }
 
 .gradient-text {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    background-size: 200% auto;
+    background-image: url('../images/image4.png');
+    background-position: 0% 50%;
+    background-repeat: no-repeat;
+    color: var(--text-white);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
+    animation: imageMove 20s linear infinite;
 }
 
+@keyframes imageMove {
+    0% {
+        background-position: 0% 50%;
+    }
+    100% {
+        background-position: 100% 50%;
+    }
+}
 /* Hero Section */
 .hero {
     position: relative;
