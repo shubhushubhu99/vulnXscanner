@@ -22,12 +22,12 @@ sys.path.insert(0, str(Path(__file__).parent))
 # local
 from extensions import socketio, logger, latest_results
 from core.scanner import resolve_target, scan_target
-from core.reporter import generate_pdf_report
 from core.deep_subdomain_scanner import scan_subdomains_blocking
 from core.database_vulnerability_scanner import scan_database_vulnerabilities_blocking
 from core.directory_scanner import scan_directories_blocking
 from core.osint_engine import OSINTEngine
 from core.whois_lookup import WhoisLookup
+from services.report_service import export_scan_report
 from services.storage_service import HISTORY_FILE, load_history, save_history
 # Configure Flask app
 app = Flask(__name__, 
@@ -93,18 +93,14 @@ def clear_history():
 
 @app.route('/export/<scan_id>', methods=['GET'])
 def export_report(scan_id):
-    history = load_history()
-    scan_data = next((item for item in history if item.get('id') == scan_id), None)
-    
-    if not scan_data:
-        return "Scan not found", 404
-        
-    pdf_buffer = generate_pdf_report(scan_data)
-    
+    result = export_scan_report(scan_id)
+    if not result["success"]:
+        return result["error"], result.get("_status_code", 500)
+
     return send_file(
-        pdf_buffer,
+        result["buffer"],
         as_attachment=True,
-        download_name=f"vulnx_report_{scan_data.get('target', 'unknown')}_{scan_data.get('timestamp')}.pdf",
+        download_name=result["filename"],
         mimetype='application/pdf'
     )
 
