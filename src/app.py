@@ -1,78 +1,44 @@
-from datetime import datetime
+# stdlib
+import os
 import sys
+from datetime import datetime
 from pathlib import Path
 
+# third-party
+from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask_socketio import emit
+
+# local
+from extensions import socketio, logger, genai_client, GEMINI_API_KEY, GEMINI_MODEL
 
 # Add src directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
-from flask import Flask, render_template, request, jsonify, redirect, url_for
-from flask_socketio import SocketIO, emit
 from core.scanner import resolve_target, scan_target
 from core.reporter import generate_pdf_report
 from core.deep_subdomain_scanner import scan_subdomains_blocking
 from core.database_vulnerability_scanner import scan_database_vulnerabilities_blocking
 from core.directory_scanner import scan_directories_blocking
 import json
-import os
 import secrets
 import uuid
 from flask import send_file
-from dotenv import load_dotenv
 import requests
-import logging
 import traceback
 import socket
 import ssl
 
 from core.mapper import TopologyMapper
 from core.osint_engine import OSINTEngine
-try:
-    # New GenAI SDK
-    from google import genai
-except Exception:
-    genai = None
 from core.whois_lookup import WhoisLookup
-
-
-# Load environment variables (GEMINI_API_KEY should be in .env)
-load_dotenv()
 
 # Configure Flask app
 app = Flask(__name__, 
     template_folder='../templates',
     static_folder='../static')
 
-# Gemini API key (may be absent in some environments)
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_OAUTH_TOKEN = os.getenv("GEMINI_OAUTH_TOKEN")
-# Optional explicit auth type: 'api_key' or 'bearer'. If unset, we auto-detect.
-GEMINI_AUTH_TYPE = os.getenv("GEMINI_AUTH_TYPE")
-# Model name (configurable)
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+socketio.init_app(app)
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("vulnx.gemini")
-if not GEMINI_API_KEY:
-    logger.warning("GEMINI_API_KEY not set; AI analysis endpoints will return a helpful error.")
-else:
-    if genai is not None:
-        try:
-            try:
-                # initialize client from new SDK only when using API key auth
-                if GEMINI_API_KEY and (GEMINI_AUTH_TYPE != 'bearer'):
-                    genai_client = genai.Client(api_key=GEMINI_API_KEY)
-                    logger.info('Initialized google.genai client')
-                else:
-                    genai_client = None
-            except Exception as e:
-                genai_client = None
-                logger.warning('google.genai client init failed: %s', e)
-        except Exception:
-            genai_client = None
-    else:
-        genai_client = None
 # Prefer env-provided secret key; generate a per-process fallback if missing
 app.config['SECRET_KEY'] = (
     os.environ.get('FLASK_SECRET_KEY')
@@ -98,17 +64,7 @@ def add_security_headers(response):
     )
     response.headers.remove('Server')
     return response
-# Use threading mode for broad compatibility
-# Configure with longer timeouts and ping/pong to keep connection alive during long scans
-socketio = SocketIO(
-    app, 
-    cors_allowed_origins="*", 
-    async_mode='threading',
-    ping_timeout=120,  # 120 seconds before ping is considered lost
-    ping_interval=30,  # Send ping every 30 seconds to keep connection alive
-    engineio_logger=False,
-    socketio_logger=False
-)
+
 
 # Ensure absolute path for history file
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -707,10 +663,7 @@ def download_report():
         except ImportError:
             # Fallback to TXT format if reportlab not available
             logger.info('reportlab not available, generating TXT report instead')
-            
-            except ImportError:
-            logger.info('reportlab not available, generating TXT report instead')
-            
+
             report_content = f"""{'='*70}
 VulnX SECURITY ANALYSIS REPORT
 {'='*70}
