@@ -46,6 +46,13 @@ socketio = SocketIO(
     async_mode='threading',
     ping_timeout=120,
     ping_interval=30,
-    engineio_logger=False,
-    socketio_logger=False
+    engineio_logger=True,
+    socketio_logger=True
 )
+
+# Global storage for state
+latest_results = {
+    'results': None,
+    'target': '',
+    'deep_scan': False
+}

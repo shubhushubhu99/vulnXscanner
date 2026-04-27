@@ -29,7 +29,6 @@ from core.directory_scanner import scan_directories_blocking
 from core.mapper import TopologyMapper
 from core.osint_engine import OSINTEngine
 from core.whois_lookup import WhoisLookup
-from routes.views import views_bp
 # Configure Flask app
 app = Flask(__name__, 
     template_folder='../templates',
@@ -44,8 +43,6 @@ app.config['SECRET_KEY'] = (
     or os.environ.get('SECRET_KEY')
     or secrets.token_hex(32)
 )
-
-app.register_blueprint(views_bp)
 
 @app.after_request
 def add_security_headers(response):
@@ -108,52 +105,45 @@ def load_messages():
             return []
     return []
 
-def save_message(message_data):
-    try:
-        messages = load_messages()
-        message_data['id'] = str(uuid.uuid4())
-        message_data['timestamp'] = datetime.now().isoformat()
-        messages.insert(0, message_data)
-        with open(MESSAGES_FILE, 'w') as f:
-            json.dump(messages, f, indent=4)
-        return True
-    except Exception as e:
-        print(f"Error saving message: {e}")
-        return False
+    def save_message(message_data):
+        try:
+            messages = load_messages()
+            message_data['id'] = str(uuid.uuid4())
+            message_data['timestamp'] = datetime.now().isoformat()
+            messages.insert(0, message_data)
+            with open(MESSAGES_FILE, 'w') as f:
+                json.dump(messages, f, indent=4)
+            return True
+        except Exception as e:
+            print(f"Error saving message: {e}")
+            return False
 
-# Global storage for state
-latest_results = {
-    'results': None,
-    'target': '',
-    'deep_scan': False
-}
+    from extensions import latest_results
 
-# @app.route('/landing-v2', methods=['GET'])
-# def landing_v2():
-#     return render_template('landing_v2.html')
+    # @app.route('/landing-v2', methods=['GET'])
+    # def landing_v2():
+    #     return render_template('landing_v2.html')
 
 
-@app.route('/clear', methods=['POST'])
-def clear():
-    global latest_results
-    latest_results = {'results': None, 'target': '', 'deep_scan': False}
-    # Also clear history file for fresh start if requested? No, usually clear just UI.
-    return redirect(url_for('dashboard'))
-    #return jsonify({'status': 'cleared'})  Earlier return statement commented out
+    @app.route('/clear', methods=['POST'])
+    def clear():
+        latest_results['results'] = None
+        latest_results['target'] = ''
+        latest_results['deep_scan'] = False
+        return redirect(url_for('views.dashboard'))
 
-@app.route('/clear-history', methods=['POST'])
-def clear_history():
-    """Clear all scan history"""
-    try:
-        global latest_results
-        # Clear the history file
-        if os.path.exists(HISTORY_FILE):
-            with open(HISTORY_FILE, 'w') as f:
-                json.dump([], f, indent=4)
-        return jsonify({'status': 'success', 'message': 'All scan history cleared successfully'})
-    except Exception as e:
-        print(f"Error clearing history: {e}")
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+    @app.route('/clear-history', methods=['POST'])
+    def clear_history():
+        """Clear all scan history"""
+        try:
+            # Clear the history file
+            if os.path.exists(HISTORY_FILE):
+                with open(HISTORY_FILE, 'w') as f:
+                    json.dump([], f, indent=4)
+            return jsonify({'status': 'success', 'message': 'All scan history cleared successfully'})
+        except Exception as e:
+            print(f"Error clearing history: {e}")
+            return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/subdomain', methods=['GET', 'POST'])
 def subdomain_page():
@@ -796,6 +786,7 @@ def api_analyze():
 # WebSocket Events
 @socketio.on('start_scan')
 def handle_scan(data):
+    print("handle_scan HIT with data:", data)
     target = data.get('target')
     deep_scan = data.get('deep_scan', False)
     
@@ -820,6 +811,7 @@ def page_not_found(e):
     return render_template("404.html"), 404
 
 def run_scan_task(target, deep_scan, custom_threads=None):
+    print(f"run_scan_task HIT: Starting background scan for: {target}")
     print(f"Starting background scan for: {target}")
     
     if deep_scan:
@@ -1202,14 +1194,17 @@ def run_db_scan_task(target, deep_scan, custom_threads=None):
         except Exception as emit_error:
             logger.error(f"Failed to emit error message: {emit_error}")
 
+from routes.views import views_bp
+app.register_blueprint(views_bp)
+
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 5000))
     HOST = os.environ.get('HOST', '127.0.0.1')
     print("="*60)
-    print("🚀 VulnX Professional Security Scanner")
+    print("-> VulnX Professional Security Scanner")
     print("="*60)
-    print(f"📍 URL: http://{HOST}:{PORT}")
-    print(f"📝 History file: {HISTORY_FILE}")
+    print(f"-> URL: http://{HOST}:{PORT}")
+    print(f"-> History file: {HISTORY_FILE}")
     print("="*60)
     print("Press CTRL+C to stop the server\n")
     socketio.run(app, host=HOST, port=PORT, debug=True, allow_unsafe_werkzeug=True)

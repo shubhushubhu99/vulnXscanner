@@ -23,12 +23,12 @@
 
     <!-- Sidebar -->
     <div class="sidebar">
-        <div class="logo"><a href="{{ url_for('landing') }}"
+        <div class="logo"><a href="{{ url_for('views.landing') }}"
                 style="text-decoration: none; color: inherit;"><span>◈</span> VulnX</a></div>
-        <!-- <a href="{{ url_for('dashboard') }}" data-nav-link="dashboard"
+        <!-- <a href="{{ url_for('views.dashboard') }}" data-nav-link="dashboard"
             class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">Dashboard</a> -->
 
-            <a href="{{ url_for('dashboard') }}" data-nav-link="dashboard"
+            <a href="{{ url_for('views.dashboard') }}" data-nav-link="dashboard"
    class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
    Port Scanner
 </a>
@@ -60,7 +60,7 @@
 
          <a href="/history" data-nav-link="history" class="nav-item {% if active_page == 'history' %}active{% endif %}">Scan History</a>
 
-        <a href="{{ url_for('settings_page') }}" data-nav-link="settings" class="nav-item {% if active_page == 'settings' %}active{% endif %}" style="margin-top: auto;">
+        <a href="{{ url_for('views.settings_page') }}" data-nav-link="settings" class="nav-item {% if active_page == 'settings' %}active{% endif %}" style="margin-top: auto;">
             <i data-lucide="settings"></i>
             <span>Settings</span>
         </a>
