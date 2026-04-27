@@ -1,4 +1,6 @@
 from flask import Blueprint, render_template, request
+from extensions import latest_results
+from services.storage_service import load_history, save_message
 
 
 views_bp = Blueprint('views', __name__)
@@ -9,7 +11,6 @@ def landing():
 
 @views_bp.route('/dashboard', methods=['GET'])
 def dashboard():
-    from extensions import latest_results
     return render_template(
         'dashboard.html',
         results=latest_results['results'],
@@ -20,7 +21,6 @@ def dashboard():
 
 @views_bp.route('/history', methods=['GET'])
 def history_page():
-    from app import load_history
     history = load_history()
     print(f"Loading history page. Found {len(history)} items.")
     return render_template(
@@ -52,7 +52,6 @@ def contact():
             'message': message
         }
 
-        from app import save_message
         if save_message(message_data):
             return render_template('contact.html', success="Your message has been sent successfully!", active_page='contact')
         else:

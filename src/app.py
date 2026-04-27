@@ -12,7 +12,7 @@ from datetime import datetime
 from pathlib import Path
 
 # third-party
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from flask import send_file
 from flask_socketio import emit
 
@@ -20,7 +20,7 @@ from flask_socketio import emit
 sys.path.insert(0, str(Path(__file__).parent))
 
 # local
-from extensions import socketio, logger, genai_client, GEMINI_API_KEY, GEMINI_MODEL
+from extensions import socketio, logger, genai_client, GEMINI_API_KEY, GEMINI_MODEL, latest_results
 from core.scanner import resolve_target, scan_target
 from core.reporter import generate_pdf_report
 from core.deep_subdomain_scanner import scan_subdomains_blocking
@@ -29,6 +29,7 @@ from core.directory_scanner import scan_directories_blocking
 from core.mapper import TopologyMapper
 from core.osint_engine import OSINTEngine
 from core.whois_lookup import WhoisLookup
+from services.storage_service import HISTORY_FILE, load_history, save_history
 # Configure Flask app
 app = Flask(__name__, 
     template_folder='../templates',
@@ -64,86 +65,32 @@ def add_security_headers(response):
     return response
 
 
-# Ensure absolute path for history file
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# Let's put it in the root (one level up from src)
-HISTORY_FILE = os.path.join(os.path.dirname(BASE_DIR), "scan_history.json")
-MESSAGES_FILE = os.path.join(os.path.dirname(BASE_DIR), "messages.json")
-
-
 @app.context_processor
 def inject_current_year():
     return {"current_year": datetime.now().year}
 
-def load_history():
-    if os.path.exists(HISTORY_FILE):
-        try:
-            with open(HISTORY_FILE, 'r') as f:
-                data = json.load(f)
-                return data if isinstance(data, list) else []
-        except Exception as e:
-            print(f"Error loading history: {e}")
-            return []
-    return []
+# @app.route('/landing-v2', methods=['GET'])
+# def landing_v2():
+#     return render_template('landing_v2.html')
 
-def save_history(history):
+
+@app.route('/clear', methods=['POST'])
+def clear():
+    latest_results['results'] = None
+    latest_results['target'] = ''
+    latest_results['deep_scan'] = False
+    return redirect(url_for('views.dashboard'))
+
+
+@app.route('/clear-history', methods=['POST'])
+def clear_history():
+    """Clear all scan history"""
     try:
-        with open(HISTORY_FILE, 'w') as f:
-            json.dump(history, f, indent=4)
-        print(f"File saved: {HISTORY_FILE}")
+        save_history([])
+        return jsonify({'status': 'success', 'message': 'All scan history cleared successfully'})
     except Exception as e:
-        print(f"Error saving history: {e}")
-
-def load_messages():
-    if os.path.exists(MESSAGES_FILE):
-        try:
-            with open(MESSAGES_FILE, 'r') as f:
-                data = json.load(f)
-                return data if isinstance(data, list) else []
-        except Exception as e:
-            print(f"Error loading messages: {e}")
-            return []
-    return []
-
-    def save_message(message_data):
-        try:
-            messages = load_messages()
-            message_data['id'] = str(uuid.uuid4())
-            message_data['timestamp'] = datetime.now().isoformat()
-            messages.insert(0, message_data)
-            with open(MESSAGES_FILE, 'w') as f:
-                json.dump(messages, f, indent=4)
-            return True
-        except Exception as e:
-            print(f"Error saving message: {e}")
-            return False
-
-    from extensions import latest_results
-
-    # @app.route('/landing-v2', methods=['GET'])
-    # def landing_v2():
-    #     return render_template('landing_v2.html')
-
-
-    @app.route('/clear', methods=['POST'])
-    def clear():
-        latest_results['results'] = None
-        latest_results['target'] = ''
-        latest_results['deep_scan'] = False
-        return redirect(url_for('views.dashboard'))
-
-    @app.route('/clear-history', methods=['POST'])
-    def clear_history():
-        """Clear all scan history"""
-        try:
-            # Clear the history file
-            if os.path.exists(HISTORY_FILE):
-                with open(HISTORY_FILE, 'w') as f:
-                    json.dump([], f, indent=4)
-            return jsonify({'status': 'success', 'message': 'All scan history cleared successfully'})
-        except Exception as e:
-            print(f"Error clearing history: {e}")
-            return jsonify({'status': 'error', 'message': str(e)}), 500
+        print(f"Error clearing history: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/subdomain', methods=['GET', 'POST'])
 def subdomain_page():
@@ -224,7 +171,6 @@ def save_settings_api():
     try:
         settings = request.get_json()
         # Store settings in session
-        from flask import session
         session['scanner_settings'] = settings
         return jsonify({'status': 'success', 'message': 'Settings saved'}), 200
     except Exception as e:
@@ -235,7 +181,6 @@ def save_settings_api():
 def get_settings_api():
     """API endpoint to retrieve scanner settings from session"""
     try:
-        from flask import session
         settings = session.get('scanner_settings', {})
         return jsonify(settings), 200
     except Exception as e:
