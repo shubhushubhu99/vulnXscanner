@@ -20,7 +20,7 @@ from flask_socketio import emit
 sys.path.insert(0, str(Path(__file__).parent))
 
 # local
-from extensions import socketio, logger, genai_client, GEMINI_API_KEY, GEMINI_MODEL, latest_results
+from extensions import socketio, logger, latest_results
 from core.scanner import resolve_target, scan_target
 from core.reporter import generate_pdf_report
 from core.deep_subdomain_scanner import scan_subdomains_blocking
@@ -29,6 +29,7 @@ from core.directory_scanner import scan_directories_blocking
 from core.mapper import TopologyMapper
 from core.osint_engine import OSINTEngine
 from core.whois_lookup import WhoisLookup
+from services.ai_service import generate_port_analysis, generate_db_analysis
 from services.storage_service import HISTORY_FILE, load_history, save_history
 # Configure Flask app
 app = Flask(__name__, 
@@ -216,63 +217,6 @@ def api_topology_data():
     mapper = TopologyMapper() 
     return jsonify(mapper.generate_graph_data())
 
-def _extract_gemini_text(obj):
-    """Recursively extract text from Gemini SDK or REST response."""
-    if not obj:
-        return ''
-    if isinstance(obj, str):
-        return obj.strip()
-    if isinstance(obj, dict):
-        for key in ('candidates', 'content', 'text', 'output', 'response'):
-            if key in obj:
-                val = obj[key]
-                if isinstance(val, list) and val:
-                    return ' '.join(filter(None, [_extract_gemini_text(v) for v in val]))
-                if isinstance(val, dict):
-                    return _extract_gemini_text(val)
-                if isinstance(val, str):
-                    return val.strip()
-        for v in obj.values():
-            t = _extract_gemini_text(v)
-            if t:
-                return t
-    if isinstance(obj, list):
-        for item in obj:
-            t = _extract_gemini_text(item)
-            if t:
-                return t
-    return ''
-
-
-def _call_gemini_rest(prompt):
-    """Send prompt to Gemini REST endpoint and return response object."""
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
-    params = {'key': GEMINI_API_KEY}
-    headers = {'Content-Type': 'application/json'}
-    if isinstance(GEMINI_API_KEY, str) and (
-        GEMINI_API_KEY.startswith('ya29.') or
-        GEMINI_API_KEY.lower().startswith('bearer ')
-    ):
-        token = GEMINI_API_KEY.split(' ', 1)[-1]
-        headers['Authorization'] = f'Bearer {token}'
-    payload = {'contents': [{'parts': [{'text': prompt}]}]}
-    return requests.post(url, headers=headers, params=params, json=payload, timeout=12)
-
-
-def _handle_gemini_rest_errors(resp):
-    """Return a jsonify error response if status >= 400, else None."""
-    if resp.status_code == 429:
-        return jsonify({'success': False, 'error': 'Rate limit exceeded. Please try again later.'}), 429
-    if resp.status_code == 401:
-        return jsonify({'success': False, 'error': 'Unauthorized: invalid Gemini API key or token.'}), 401
-    if resp.status_code >= 400:
-        try:
-            body = resp.json()
-        except Exception:
-            body = resp.text
-        return jsonify({'success': False, 'error': 'Gemini API error', 'status': resp.status_code, 'detail': body}), resp.status_code
-    return None
-
 @app.route('/ai_analysis', methods=['POST'])
 def ai_analysis():
     """AI-powered security analysis for a specific port using Google Gemini."""
@@ -281,77 +225,9 @@ def ai_analysis():
     service = data.get('service', 'Unknown')
     banner = data.get('banner', 'No banner')
     severity = data.get('severity', 'Low')
-
-    if not port:
-        return jsonify({'success': False, 'error': 'Port number is required'}), 400
-    if not GEMINI_API_KEY:
-        return jsonify({'success': False, 'error': 'Gemini API key not configured'}), 503
-
-    prompt = f"""Analyze this port scan result in SIMPLE words for non-technical users.
-
-CRITICAL: Output ONLY plain text. NO HTML tags. NO markdown. NO formatting symbols.
-
-Port: {port}
-Service: {service}
-Banner: {banner}
-Risk: {severity}
-
-RESPONSE FORMAT (EXACTLY as shown):
-
-1. **What is this port?**
-[1-2 lines explaining simply]
-
-2. **Why is it risky?**
-* [Risk point]
-* [Risk point]
-* [Risk point]
-
-3. **How to secure it?**
-* [Action]
-* [Action]
-* [Action]
-* [Action]
-
-4. **Risk score:** [LOW/MEDIUM/HIGH/CRITICAL]
-
-RULES:
-- Use ONLY asterisks (*) for bullet points
-- Use ONLY numbers and dots (1. 2. 3.) for lists
-- NO HTML tags whatsoever
-- SHORT sentences only
-- Simple English, NO technical jargon
-- Keep under 200 words total"""
-
-    if genai_client:
-        try:
-            logger.info('Calling Gemini via google.genai SDK')
-            sdk_resp = genai_client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
-            analysis_text = getattr(sdk_resp, 'text', None)
-            if not analysis_text:
-                try:
-                    resp_json = sdk_resp.to_dict() if hasattr(sdk_resp, 'to_dict') else json.loads(json.dumps(sdk_resp, default=lambda o: getattr(o, '__dict__', str(o))))
-                except Exception:
-                    resp_json = str(sdk_resp)
-                analysis_text = _extract_gemini_text(resp_json) or json.dumps(resp_json)
-            return jsonify({'success': True, 'data': {'analysis_html': analysis_text, 'port': port, 'service': service}})
-        except Exception as e:
-            logger.error('google.genai SDK call failed: %s', e)
-    try:
-        logger.info('Sending request to Gemini REST for port %s', port)
-        resp = _call_gemini_rest(prompt)
-        logger.info('Gemini response status: %s', resp.status_code)
-        err = _handle_gemini_rest_errors(resp)
-        if err:
-            return err
-        analysis_text = _extract_gemini_text(resp.json()) or json.dumps(resp.json())
-        return jsonify({'success': True, 'data': {'analysis_html': analysis_text, 'port': port, 'service': service}})
-    except requests.Timeout:
-        return jsonify({'success': False, 'error': 'Gemini request timed out'}), 504
-    except requests.RequestException as e:
-        return jsonify({'success': False, 'error': 'Network error when calling Gemini', 'detail': str(e)}), 502
-    except Exception as e:
-        logger.error('Unexpected error during AI analysis: %s', e)
-        return jsonify({'success': False, 'error': 'Failed to generate AI analysis', 'detail': str(e)}), 500
+    result = generate_port_analysis(port, service, banner, severity)
+    status_code = result.pop('_status_code', 200)
+    return jsonify(result), status_code
 
 
 @app.route('/db_analysis', methods=['POST'])
@@ -363,86 +239,15 @@ def db_analysis():
     vuln_evidence = data.get('evidence', '')
     risk_level = data.get('risk', 'Low')
     vuln_recommendation = data.get('recommendation', '')
-
-    if not vuln_name:
-        return jsonify({'success': False, 'error': 'Vulnerability name is required'}), 400
-    if not GEMINI_API_KEY:
-        return jsonify({'success': False, 'error': 'Gemini API key not configured'}), 503
-
-    prompt = f"""Analyze this database vulnerability in SIMPLE words for non-technical users.
-
-CRITICAL: Output ONLY plain text. NO HTML tags. NO markdown. NO formatting symbols.
-
-Vulnerability: {vuln_name}
-Description: {vuln_description}
-Evidence: {vuln_evidence}
-Risk Level: {risk_level}
-Current Recommendation: {vuln_recommendation}
-
-RESPONSE FORMAT (EXACTLY as shown):
-
-1. **What is this vulnerability?**
-[1-2 lines explaining simply what went wrong]
-
-2. **Why is it dangerous?**
-* [Risk point]
-* [Risk point]
-* [Risk point]
-
-3. **How to fix it?**
-* [Action]
-* [Action]
-* [Action]
-* [Action]
-
-4. **How to prevent it in future?**
-* [Prevention measure]
-* [Prevention measure]
-* [Prevention measure]
-
-5. **Risk Score:** [LOW/MEDIUM/HIGH/CRITICAL]
-
-RULES:
-- Use ONLY asterisks (*) for bullet points
-- Use ONLY numbers and dots (1. 2. 3.) for lists
-- NO HTML tags whatsoever
-- SHORT sentences only
-- Simple English, NO technical jargon
-- Keep under 250 words total"""
-
-    # Try SDK first
-    if genai_client:
-        try:
-            logger.info('Calling Gemini via google.genai SDK for db vulnerability analysis')
-            sdk_resp = genai_client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
-            analysis_text = getattr(sdk_resp, 'text', None)
-            if not analysis_text:
-                try:
-                    resp_json = sdk_resp.to_dict() if hasattr(sdk_resp, 'to_dict') else json.loads(json.dumps(sdk_resp, default=lambda o: getattr(o, '__dict__', str(o))))
-                except Exception:
-                    resp_json = str(sdk_resp)
-                analysis_text = _extract_gemini_text(resp_json) or json.dumps(resp_json)
-            return jsonify({'success': True, 'data': {'analysis_html': analysis_text, 'name': vuln_name, 'risk': risk_level}})
-        except Exception as e:
-            logger.error('google.genai SDK call failed for db analysis: %s', e)
-
-    # Fallback to REST
-    try:
-        logger.info('Sending request to Gemini REST for db vulnerability: %s', vuln_name)
-        resp = _call_gemini_rest(prompt)
-        logger.info('Gemini response status: %s', resp.status_code)
-        err = _handle_gemini_rest_errors(resp)
-        if err:
-            return err
-        analysis_text = _extract_gemini_text(resp.json()) or json.dumps(resp.json())
-        return jsonify({'success': True, 'data': {'analysis_html': analysis_text, 'name': vuln_name, 'risk': risk_level}})
-    except requests.Timeout:
-        return jsonify({'success': False, 'error': 'Gemini request timed out'}), 504
-    except requests.RequestException as e:
-        return jsonify({'success': False, 'error': 'Network error when calling Gemini', 'detail': str(e)}), 502
-    except Exception as e:
-        logger.error('Unexpected error during db vulnerability AI analysis: %s', e)
-        return jsonify({'success': False, 'error': 'Failed to generate AI analysis', 'detail': str(e)}), 500
+    result = generate_db_analysis(
+        vuln_name,
+        vuln_description,
+        vuln_evidence,
+        risk_level,
+        vuln_recommendation,
+    )
+    status_code = result.pop('_status_code', 200)
+    return jsonify(result), status_code
 
 @app.route('/download_report', methods=['POST'])
 def download_report():
