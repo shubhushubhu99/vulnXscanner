@@ -1,37 +1,35 @@
 # stdlib
 import os
 import sys
+import json
+import secrets
+import uuid
+import requests
+import traceback
+import socket
+import ssl
 from datetime import datetime
 from pathlib import Path
 
 # third-party
 from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import send_file
 from flask_socketio import emit
-
-# local
-from extensions import socketio, logger, genai_client, GEMINI_API_KEY, GEMINI_MODEL
 
 # Add src directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
+# local
+from extensions import socketio, logger, genai_client, GEMINI_API_KEY, GEMINI_MODEL
 from core.scanner import resolve_target, scan_target
 from core.reporter import generate_pdf_report
 from core.deep_subdomain_scanner import scan_subdomains_blocking
 from core.database_vulnerability_scanner import scan_database_vulnerabilities_blocking
 from core.directory_scanner import scan_directories_blocking
-import json
-import secrets
-import uuid
-from flask import send_file
-import requests
-import traceback
-import socket
-import ssl
-
 from core.mapper import TopologyMapper
 from core.osint_engine import OSINTEngine
 from core.whois_lookup import WhoisLookup
-
+from routes.views import views_bp
 # Configure Flask app
 app = Flask(__name__, 
     template_folder='../templates',
@@ -46,6 +44,9 @@ app.config['SECRET_KEY'] = (
     or os.environ.get('SECRET_KEY')
     or secrets.token_hex(32)
 )
+
+app.register_blueprint(views_bp)
+
 @app.after_request
 def add_security_headers(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
@@ -438,7 +439,7 @@ RULES:
 - Simple English, NO technical jargon
 - Keep under 200 words total"""
 
-    if genai is not None and 'genai_client' in globals() and genai_client:
+    if genai_client:
         try:
             logger.info('Calling Gemini via google.genai SDK')
             sdk_resp = genai_client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
@@ -527,7 +528,7 @@ RULES:
 - Keep under 250 words total"""
 
     # Try SDK first
-    if genai is not None and 'genai_client' in globals() and genai_client:
+    if genai_client:
         try:
             logger.info('Calling Gemini via google.genai SDK for db vulnerability analysis')
             sdk_resp = genai_client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
