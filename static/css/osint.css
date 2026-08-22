@@ -52,7 +52,56 @@
     max-width: 800px;
 }
 
-#startUnifiedOsint {
+#osintTarget:focus {
+    border-color: var(--vulnx-emerald);
+    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
+    outline: none;
+}
+
+.search-section label {
+    display: block;
+    color: var(--vulnx-muted);
+    margin-bottom: 0.5rem;
+}
+
+.whois-message {
+    min-height: 1.5rem;
+    margin: 0.5rem 0;
+    color: var(--vulnx-muted);
+}
+
+.whois-message.error { color: #f87171; }
+.whois-message.success { color: var(--vulnx-emerald); }
+.whois-message.warning { color: #fbbf24; }
+.whois-loading { color: var(--vulnx-muted); padding: 1rem 0; }
+
+.whois-card {
+    background: #010409;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+.whois-card h3 {
+    color: var(--vulnx-emerald);
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
+    margin: 0 0 1rem;
+}
+
+.whois-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.7rem 0;
+    border-top: 1px solid #1f2937;
+}
+
+.whois-row span { color: var(--vulnx-muted); }
+.whois-row strong { color: #fff; text-align: right; overflow-wrap: anywhere; }
+
+/* 3. Button Styling */
+#startOsint {
     background: linear-gradient(135deg, #22c55e 0%, #10b981 100%);
     color: #0d1117;
     font-weight: 700;

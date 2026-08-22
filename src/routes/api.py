@@ -13,7 +13,6 @@ from core.dns_relationship_map import DNSRelationshipMap
 from core.technology_detection import TechnologyDetection
 from core.url_domain_intelligence import URLDomainIntelligence
 from core.osint_scan import run_osint_scan
-from core.osint_report import generate_osint_pdf
 from extensions import logger
 from services.report_service import export_scan_report, generate_ai_report
 from services.storage_service import save_history
@@ -226,24 +225,6 @@ def api_osint_scan():
     except Exception:
         logger.exception("Error in unified OSINT scan")
         return jsonify({'status': 'ERROR', 'error': 'OSINT scan failed'}), 500
-@api_bp.route('/api/osint/report', methods=['POST'])
-def api_osint_report():
-    """Generate a PDF from the current unified OSINT scan payload."""
-    data = request.get_json(silent=True) or {}
-    if not isinstance(data, dict) or not data:
-        return jsonify({'status': 'ERROR', 'error': 'No OSINT scan data provided'}), 400
-
-    try:
-        pdf_buffer, filename = generate_osint_pdf(data)
-        return send_file(
-            pdf_buffer,
-            as_attachment=True,
-            download_name=filename,
-            mimetype='application/pdf',
-        )
-    except Exception:
-        logger.exception("Error generating OSINT PDF report")
-        return jsonify({'status': 'ERROR', 'error': 'OSINT PDF report generation failed'}), 500
 
 
 @api_bp.route('/api/analyze', methods=['GET'])

@@ -80,6 +80,22 @@
     {% endif %}
     {% endif %}
 </div>
+
+<!-- CVE Modal -->
+<div id="cveModal" class="ai-modal" style="display: none;">
+    <div class="ai-modal-content" style="max-width: 800px; width: 90%;">
+        <div class="ai-modal-header">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                <h3 id="cveModalTitle" style="margin: 0; color: #fff;">CVE Report</h3>
+            </div>
+            <button onclick="closeCveModal()" style="background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 1.2rem;">✕</button>
+        </div>
+        <div id="cveModalContent" style="padding: 24px; max-height: 60vh; overflow-y: auto;">
+            <!-- Content injected dynamically -->
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}

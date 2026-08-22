@@ -10,6 +10,85 @@ from core.directory_scanner import scan_directories_blocking
 from core.scanner import resolve_target, scan_target
 from extensions import socketio, logger, latest_results
 from services.storage_service import load_history, save_history
+from services.vulnerability.cve_service import get_cves_for_service
+
+
+def _emit_log(port, message):
+    socketio.emit('cve_log', {'port': port, 'message': message})
+
+def run_cve_enrichment_task(target, port, service, banner):
+    import time
+    from services.vulnerability.banner_parser import parse_banner
+    from services.vulnerability.cpe_mapper import map_to_cpe
+    from services.vulnerability.cve_service import fetch_cves_for_cpe
+
+    _emit_log(port, f"🔍 Parsing banner for port {port} ({service})...")
+    time.sleep(0.1)
+
+    if not banner or banner.strip() in ["", "No banner response"]:
+        _emit_log(port, "⚠️ No banner available. Cannot determine product version.")
+        _emit_log(port, "❌ CVE lookup aborted — no banner data.")
+        socketio.emit('cve_results', {
+            'status': 'no_cpe_match', 'target': target, 'port': port,
+            'service': service, 'product': None, 'version': None,
+            'resolved_cpe': None, 'cve_count': 0, 'cves': []
+        })
+        return
+
+    vendor, product, version = parse_banner(service, banner)
+    if product:
+        _emit_log(port, f"✅ Identified: {vendor or '?'} / {product} / {version or 'unknown'}")
+    else:
+        _emit_log(port, f"⚠️ Could not extract product from banner: '{banner[:60]}'")
+        _emit_log(port, "❌ CVE lookup aborted — banner not recognized.")
+        socketio.emit('cve_results', {
+            'status': 'no_cpe_match', 'target': target, 'port': port,
+            'service': service, 'product': None, 'version': None,
+            'resolved_cpe': None, 'cve_count': 0, 'cves': []
+        })
+        return
+
+    _emit_log(port, f"🔗 Looking up CPE in NVD dictionary for: {product} {version}...")
+    cpe = map_to_cpe(vendor, product, version)
+
+    if cpe:
+        _emit_log(port, f"✅ CPE resolved: {cpe}")
+    else:
+        _emit_log(port, "❌ Could not resolve CPE. Skipping CVE lookup.")
+        socketio.emit('cve_results', {
+            'status': 'no_cpe_match', 'target': target, 'port': port,
+            'service': service, 'product': product, 'version': version,
+            'resolved_cpe': None, 'cve_count': 0, 'cves': []
+        })
+        return
+
+    _emit_log(port, f"🛡️ Querying NVD CVE 2.0 API...")
+    _emit_log(port, f"   → Endpoint: services.nvd.nist.gov")
+    _emit_log(port, f"   → CPE: {cpe}")
+
+    try:
+        cves = fetch_cves_for_cpe(cpe)
+        _emit_log(port, f"📦 Received {len(cves)} vulnerabilit{'y' if len(cves)==1 else 'ies'} from NVD.")
+        if cves:
+            critical = sum(1 for c in cves if c.severity == 'CRITICAL')
+            high = sum(1 for c in cves if c.severity == 'HIGH')
+            _emit_log(port, f"   🔴 Critical: {critical}  🟠 High: {high}  🟡 Others: {len(cves)-critical-high}")
+        _emit_log(port, "✅ Done. Rendering results...")
+
+        cve_data = {
+            'status': 'success', 'target': target, 'port': port, 'service': service,
+            'product': product, 'version': version, 'resolved_cpe': cpe,
+            'cve_count': len(cves), 'cves': [c.to_dict() for c in cves]
+        }
+        socketio.emit('cve_results', cve_data)
+
+    except Exception as e:
+        logger.error(f"Error fetching CVEs for port {port}: {e}")
+        _emit_log(port, f"❌ NVD API error: {str(e)[:80]}")
+        socketio.emit('cve_results', {
+            'status': 'error', 'target': target, 'port': port,
+            'service': service, 'cve_count': 0, 'cves': []
+        })
 
 
 def register_socket_events():
@@ -99,6 +178,15 @@ def register_socket_events():
             print(f"Error during scan: {e}")
             socketio.emit('scan_log', {'message': f"❌ Error: {str(e)}"})
             socketio.emit('scan_complete', {'total_open': 0, 'results': []})
+
+    @socketio.on('fetch_cve')
+    def handle_fetch_cve(data):
+        target = data.get('target', 'Unknown')
+        port = data.get('port')
+        service = data.get('service')
+        banner = data.get('banner')
+        if port and service:
+            socketio.start_background_task(run_cve_enrichment_task, target, port, service, banner)
 
     @socketio.on('start_subdomain_scan')
     def handle_subdomain_scan(data):
