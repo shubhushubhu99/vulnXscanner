@@ -8,6 +8,11 @@ from services.ai_service import generate_port_analysis, generate_db_analysis
 from core.mapper import TopologyMapper
 from core.osint_engine import OSINTEngine
 from core.whois_lookup import WhoisLookup
+from core.ip_geolocation import IPGeolocation
+from core.dns_relationship_map import DNSRelationshipMap
+from core.technology_detection import TechnologyDetection
+from core.url_domain_intelligence import URLDomainIntelligence
+from core.osint_scan import run_osint_scan
 from extensions import logger
 from services.report_service import export_scan_report, generate_ai_report
 from services.storage_service import save_history
@@ -149,6 +154,77 @@ def api_osint(target):
     except Exception as e:
         logger.exception("Error in OSINT endpoint")
         return jsonify({"error": str(e)}), 500
+
+
+@api_bp.route('/api/whois/lookup', methods=['POST'])
+def api_whois_lookup():
+    data = request.get_json(silent=True) or {}
+    domain = data.get('domain', '')
+
+    try:
+        result = WhoisLookup().lookup(domain)
+    except ValueError as error:
+        return jsonify({'status': 'ERROR', 'error': str(error)}), 400
+
+    if result['status'] == 'ERROR':
+        return jsonify(result), 503
+    return jsonify(result), 200
+
+
+@api_bp.route('/api/ip-geolocation', methods=['POST'])
+def api_ip_geolocation():
+    data = request.get_json(silent=True) or {}
+    ip_address = data.get('ip', '')
+
+    try:
+        result = IPGeolocation().lookup(ip_address)
+    except ValueError as error:
+        return jsonify({'status': 'ERROR', 'error': str(error)}), 400
+
+    if result['status'] in {'ERROR', 'FAILED'}:
+        return jsonify(result), 503
+    return jsonify(result), 200
+
+
+@api_bp.route('/api/osint/dns-map', methods=['POST'])
+def api_dns_relationship_map():
+    data = request.get_json(silent=True) or {}
+    try:
+        return jsonify(DNSRelationshipMap().build(data.get('domain', ''))), 200
+    except ValueError as error:
+        return jsonify({'status': 'ERROR', 'error': str(error)}), 400
+
+
+@api_bp.route('/api/technology-detection', methods=['POST'])
+def api_technology_detection():
+    data = request.get_json(silent=True) or {}
+    try:
+        result = TechnologyDetection().detect(data.get('domain', ''))
+    except ValueError as error:
+        return jsonify({'status': 'FAILED', 'error': str(error)}), 400
+    return jsonify(result), 200 if result['status'] != 'FAILED' else 503
+
+
+@api_bp.route('/api/url-domain-intelligence', methods=['POST'])
+def api_url_domain_intelligence():
+    data = request.get_json(silent=True) or {}
+    try:
+        result = URLDomainIntelligence().analyze(data.get('target', data.get('domain', '')), inspect_http=True)
+    except ValueError as error:
+        return jsonify({'status': 'FAILED', 'error': str(error)}), 400
+    return jsonify(result), 200
+
+
+@api_bp.route('/api/osint/scan', methods=['POST'])
+def api_osint_scan():
+    data = request.get_json(silent=True) or {}
+    try:
+        return jsonify(run_osint_scan(data.get('domain', ''))), 200
+    except ValueError as error:
+        return jsonify({'status': 'ERROR', 'error': str(error)}), 400
+    except Exception:
+        logger.exception("Error in unified OSINT scan")
+        return jsonify({'status': 'ERROR', 'error': 'OSINT scan failed'}), 500
 
 
 @api_bp.route('/api/analyze', methods=['GET'])

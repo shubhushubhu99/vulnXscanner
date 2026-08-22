@@ -47,6 +47,48 @@
     outline: none;
 }
 
+.search-section label {
+    display: block;
+    color: var(--vulnx-muted);
+    margin-bottom: 0.5rem;
+}
+
+.whois-message {
+    min-height: 1.5rem;
+    margin: 0.5rem 0;
+    color: var(--vulnx-muted);
+}
+
+.whois-message.error { color: #f87171; }
+.whois-message.success { color: var(--vulnx-emerald); }
+.whois-message.warning { color: #fbbf24; }
+.whois-loading { color: var(--vulnx-muted); padding: 1rem 0; }
+
+.whois-card {
+    background: #010409;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+.whois-card h3 {
+    color: var(--vulnx-emerald);
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
+    margin: 0 0 1rem;
+}
+
+.whois-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.7rem 0;
+    border-top: 1px solid #1f2937;
+}
+
+.whois-row span { color: var(--vulnx-muted); }
+.whois-row strong { color: #fff; text-align: right; overflow-wrap: anywhere; }
+
 /* 3. Button Styling */
 #startOsint {
     background: linear-gradient(135deg, #22c55e 0%, #10b981 100%);
@@ -64,3 +106,192 @@
     transform: translateY(-2px);
     box-shadow: 0 4px 20px rgba(34, 197, 94, 0.4);
 }
+
+.ipgeo-tool {
+    margin-top: 4rem;
+    border-top: 1px solid #30363d;
+    padding-top: 3rem;
+}
+
+.ipgeo-header h2 {
+    color: var(--vulnx-emerald);
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.ipgeo-header p, .ipgeo-message, .ipgeo-disclaimer {
+    color: var(--vulnx-muted);
+}
+
+.ipgeo-search label {
+    display: block;
+    color: var(--vulnx-muted);
+    margin: 1.5rem 0 0.5rem;
+}
+
+#ipgeoTarget {
+    background: #010409;
+    border: 1px solid #30363d;
+    color: #fff;
+    padding: 1.2rem 1.5rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    width: 100%;
+    max-width: 800px;
+}
+
+#ipgeoTarget:focus {
+    border-color: var(--vulnx-emerald);
+    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
+    outline: none;
+}
+
+#startIpGeo {
+    background: linear-gradient(135deg, #22c55e 0%, #10b981 100%);
+    color: #0d1117;
+    font-weight: 700;
+    padding: 14px 35px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-top: 1rem;
+}
+
+.ipgeo-message { min-height: 1.5rem; margin: 0.5rem 0; }
+.ipgeo-message.error { color: #f87171; }
+.ipgeo-message.success { color: var(--vulnx-emerald); }
+.ipgeo-message.warning { color: #fbbf24; }
+.ipgeo-loading { color: var(--vulnx-muted); padding: 1rem 0; }
+.ipgeo-results { display: grid; gap: 1rem; margin-top: 1rem; }
+
+.ipgeo-card {
+    background: #010409;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+.ipgeo-card h3 {
+    color: var(--vulnx-emerald);
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
+    margin: 0 0 1rem;
+}
+
+.ipgeo-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.7rem 0;
+    border-top: 1px solid #1f2937;
+}
+
+.ipgeo-row span { color: var(--vulnx-muted); }
+.ipgeo-row strong { color: #fff; text-align: right; overflow-wrap: anywhere; }
+.ipgeo-disclaimer { font-size: 0.9rem; margin-top: 1rem; }
+
+.unified-osint-search {
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.unified-osint-search label {
+    display: block;
+    color: var(--vulnx-muted);
+    margin-bottom: 0.5rem;
+}
+
+#unifiedOsintTarget {
+    background: #010409;
+    border: 1px solid #30363d;
+    color: #fff;
+    padding: 1.2rem 1.5rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    width: 100%;
+    max-width: 800px;
+}
+
+#startUnifiedOsint {
+    background: linear-gradient(135deg, #22c55e 0%, #10b981 100%);
+    color: #0d1117;
+    font-weight: 700;
+    padding: 14px 35px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-top: 1rem;
+}
+
+.unified-osint-message { min-height: 1.5rem; color: var(--vulnx-emerald); }
+.unified-osint-message.error { color: #f87171; }
+.unified-osint-progress {
+    display: grid;
+    gap: 0.4rem;
+    color: var(--vulnx-muted);
+    margin: 1rem 0 1.5rem;
+}
+.unified-osint-results { display: grid; gap: 1rem; }
+.unified-osint-card {
+    background: #010409;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+.unified-osint-card h3 {
+    color: var(--vulnx-emerald);
+    font-size: 0.9rem;
+    letter-spacing: 0.06em;
+    margin: 0 0 1rem;
+}
+.unified-osint-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.7rem 0;
+    border-top: 1px solid #1f2937;
+}
+.unified-osint-row span { color: var(--vulnx-muted); }
+.unified-osint-row strong { color: #fff; text-align: right; overflow-wrap: anywhere; }
+.standalone-osint-tools { margin-top: 4rem; border-top: 1px solid #30363d; padding-top: 3rem; }
+
+.dns-map-card { overflow: hidden; }
+.dns-map-svg { width: 100%; min-height: 420px; background: #0b1220; border: 1px solid #30363d; border-radius: 10px; cursor: grab; touch-action: none; }
+.dns-map-svg:active { cursor: grabbing; }
+.dns-map-edge { stroke: #64748b; stroke-width: 2; marker-end: url(#dns-map-arrow); }
+.dns-map-edge-label { fill: #d1d5db; font-size: 12px; text-anchor: middle; }
+.dns-map-node circle { stroke: #cbd5e1; stroke-width: 2; fill: #334155; }
+.dns-map-node text { fill: #fff; font-size: 11px; pointer-events: none; }
+.dns-map-domain circle { fill: #10b981; stroke: #a7f3d0; }
+.dns-map-ip circle { fill: #2563eb; stroke: #bfdbfe; }
+.dns-map-mail circle { fill: #d97706; stroke: #fed7aa; }
+.dns-map-nameserver circle { fill: #7c3aed; stroke: #ddd6fe; }
+.dns-map-cname circle { fill: #0891b2; stroke: #a5f3fc; }
+.dns-map-txt circle, .dns-map-soa circle, .dns-map-caa circle { fill: #475569; stroke: #cbd5e1; }
+.dns-map-empty { color: #fbbf24; padding: 1rem 0; }
+.dns-map-legend { display: flex; flex-wrap: wrap; gap: 0.8rem 1.25rem; color: var(--vulnx-muted); font-size: 0.85rem; margin-top: 0.75rem; }
+.dns-map-legend-item { display: inline-flex; align-items: center; gap: 0.35rem; }
+.dns-map-legend-dot { width: 0.65rem; height: 0.65rem; border-radius: 50%; display: inline-block; background: #475569; }
+.dns-map-legend-dot.dns-map-domain { background: #10b981; }
+.dns-map-legend-dot.dns-map-ip { background: #2563eb; }
+.dns-map-legend-dot.dns-map-mail { background: #d97706; }
+.dns-map-legend-dot.dns-map-nameserver { background: #7c3aed; }
+.dns-map-legend-dot.dns-map-cname { background: #0891b2; }
+.dns-map-summary, .dns-map-metadata { margin-bottom: 1rem; padding: 1rem; border: 1px solid #30363d; border-radius: 10px; background: #0b1220; }
+.dns-map-summary h4, .dns-map-metadata h4 { color: #a7f3d0; margin: 0 0 0.75rem; font-size: 0.85rem; letter-spacing: 0.08em; }
+.dns-map-summary > div { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.dns-map-summary-item { display: inline-flex; gap: 0.5rem; padding: 0.45rem 0.7rem; border: 1px solid #334155; border-radius: 6px; color: #e2e8f0; }
+.dns-map-summary-item strong { color: #67e8f9; }
+.dns-map-metadata { display: grid; gap: 0.8rem; }
+.dns-map-metadata > h4 { grid-column: 1 / -1; }
+.dns-map-metadata-card { padding: 0.8rem; border: 1px solid #334155; border-radius: 8px; }
+.dns-map-metadata-card h4 { color: #67e8f9; margin: 0 0 0.6rem; font-size: 0.8rem; }
+.dns-map-metadata-card div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.35rem 0; border-top: 1px solid #1e293b; }
+.dns-map-metadata-card span { color: var(--vulnx-muted); }
+.dns-map-metadata-card strong { color: #f8fafc; overflow-wrap: anywhere; }
+.dns-map-metadata-card details { color: #cbd5e1; }
+.dns-map-detail { display: grid; gap: 0.35rem; margin-top: 1rem; padding: 0.9rem; border-left: 3px solid #22c55e; background: #111827; color: #e2e8f0; }
