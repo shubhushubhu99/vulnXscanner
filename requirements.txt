@@ -11,3 +11,4 @@ google-genai
 python-dotenv
 dnspython==2.6.1
 aiohttp
+python-whois
