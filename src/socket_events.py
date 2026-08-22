@@ -10,6 +10,7 @@ from core.directory_scanner import scan_directories_blocking
 from core.scanner import resolve_target, scan_target
 from extensions import socketio, logger, latest_results
 from services.storage_service import load_history, save_history
+from services.vulnerability.cve_service import get_cves_for_service
 
 
 def register_socket_events():
@@ -95,10 +96,39 @@ def register_socket_events():
                 'total_open': len(res_list),
                 'results': res_list
             })
+            
+            # Trigger async CVE enrichment
+            socketio.start_background_task(run_cve_enrichment_task, target, res_list)
         except Exception as e:
             print(f"Error during scan: {e}")
             socketio.emit('scan_log', {'message': f"❌ Error: {str(e)}"})
             socketio.emit('scan_complete', {'total_open': 0, 'results': []})
+
+    def run_cve_enrichment_task(target, res_list):
+        print(f"DEBUG: Starting run_cve_enrichment_task for {target} with {len(res_list)} ports")
+        for port, service, banner, severity, threat in res_list:
+            print(f"DEBUG: Checking port {port}, banner: {banner}")
+            if banner and banner != "No banner response":
+                try:
+                    print(f"DEBUG: Calling get_cves_for_service for {service}...")
+                    cve_data = get_cves_for_service(service, banner)
+                    cve_data['target'] = target
+                    cve_data['port'] = port
+                    cve_data['service'] = service
+                    print(f"DEBUG: Emitting cve_results for port {port}: {cve_data['status']}")
+                    socketio.emit('cve_results', cve_data)
+                except Exception as e:
+                    print(f"DEBUG: Error enriching CVEs for port {port}: {e}")
+                    logger.error(f"Error enriching CVEs for port {port}: {e}")
+                    socketio.emit('cve_results', {
+                        'status': 'error',
+                        'target': target,
+                        'port': port,
+                        'service': service,
+                        'cve_count': 0,
+                        'cves': []
+                    })
+        print("DEBUG: run_cve_enrichment_task finished")
 
     @socketio.on('start_subdomain_scan')
     def handle_subdomain_scan(data):

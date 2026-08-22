@@ -1202,3 +1202,25 @@ footer {
         margin-bottom: 10px;
     }
 }
+
+/* === CVE Integration Styles === */
+.cve-btn:hover {
+    background: rgba(59, 130, 246, 0.15) !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+}
+
+.cve-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(59, 130, 246, 0.2);
+    border-radius: 50%;
+    border-top-color: #3b82f6;
+    animation: cve-spin 1s ease-in-out infinite;
+    margin: 0 auto;
+}
+
+@keyframes cve-spin {
+    to { transform: rotate(360deg); }
+}
