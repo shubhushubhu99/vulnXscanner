@@ -20,37 +20,6 @@
     <div id="unifiedOsintProgress" class="unified-osint-progress" aria-live="polite"></div>
     <div id="unifiedOsintResults" class="unified-osint-results" aria-live="polite"></div>
 
-    <div class="standalone-osint-tools">
-        <div class="osint-header">
-            <h2>STANDALONE RECON TOOLS</h2>
-            <p>Run either existing module independently.</p>
-        </div>
-    </div>
-    
-    <form class="search-section" id="whoisForm">
-        <label for="osintTarget">Domain</label>
-        <input type="text" id="osintTarget" placeholder="Enter domain (e.g., example.com)" autocomplete="off" required>
-        <div class="button-wrapper">
-            <button id="startOsint" type="submit">LOOKUP</button>
-        </div>
-        <p id="whoisMessage" class="whois-message" role="status"></p>
-    </form>
-
-    <div id="osintResults" class="results-grid" aria-live="polite"></div>
-
-    <section class="ipgeo-tool" aria-labelledby="ipgeoTitle">
-        <div class="ipgeo-header">
-            <h2 id="ipgeoTitle">IP GEOLOCATION</h2>
-            <p>Inspect publicly available intelligence for a public IPv4 or IPv6 address.</p>
-        </div>
-        <form class="ipgeo-search" id="ipgeoForm">
-            <label for="ipgeoTarget">IP Address</label>
-            <input type="text" id="ipgeoTarget" placeholder="Enter IP (e.g., 8.8.8.8)" autocomplete="off" required>
-            <button id="startIpGeo" type="submit">LOOKUP IP</button>
-            <p id="ipgeoMessage" class="ipgeo-message" role="status"></p>
-        </form>
-        <div id="ipgeoResults" class="ipgeo-results" aria-live="polite"></div>
-    </section>
 </div>
 
 <script src="{{ url_for('static', filename='js/osint.js') }}"></script>

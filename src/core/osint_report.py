@@ -100,19 +100,41 @@ def build_osint_report_data(scan_data, generated_at=None):
         module = scan_data.get(key) or {}
         module_status.append({"module": label, "status": _status(module)})
     successful = sum(item["status"] in {"SUCCESS", "PARTIAL", "COMPLETED", "CALCULATED"} for item in module_status)
+    dns_records = _dns_records(scan_data)
+    addresses = (scan_data.get("ip_resolution") or {}).get("addresses") or []
+    technologies = [item for item in (scan_data.get("technology_detection") or {}).get("technologies", []) if isinstance(item, dict)]
+    observations = []
+    if dns_records:
+        observations.append("Public DNS infrastructure identified.")
+    nameserver_count = sum(record_type == "NS" for record_type, _, _ in dns_records)
+    if nameserver_count > 1:
+        observations.append("Multiple nameservers identified.")
+    if any(record_type == "MX" for record_type, _, _ in dns_records):
+        observations.append("Public mail infrastructure identified.")
+    if technologies:
+        observations.append("Technology fingerprints detected.")
+    if addresses:
+        observations.append("Public IP infrastructure identified.")
     generated_at = generated_at or datetime.now()
     return {
         "target": _text(scan_data.get("target")) or "unknown target",
         "generated_at": generated_at,
         "domain_intelligence": scan_data.get("url_domain_intelligence") or {},
         "whois": scan_data.get("whois") or {},
-        "dns": _dns_records(scan_data),
+        "dns": dns_records,
         "dns_map": scan_data.get("dns_relationship_map") or {},
         "resolution": scan_data.get("ip_resolution") or {},
         "geolocation": scan_data.get("ip_geolocation") or {},
-        "technologies": [item for item in (scan_data.get("technology_detection") or {}).get("technologies", []) if isinstance(item, dict)],
+        "technologies": technologies,
         "technology_status": _status(scan_data.get("technology_detection")),
-        "findings": [],
+        "findings": observations,
+        "overview": {
+            "dns_records": len(dns_records),
+            "ip_addresses": len(addresses),
+            "nameservers": nameserver_count,
+            "mail_servers": sum(record_type == "MX" for record_type, _, _ in dns_records),
+            "technologies": len(technologies),
+        },
         "module_status": module_status,
         "successful_modules": successful,
         "failed_modules": len(module_status) - successful,
@@ -157,10 +179,11 @@ class _ReportDocTemplate(BaseDocTemplate):
 
 def _styles():
     styles = getSampleStyleSheet()
-    styles.add(ParagraphStyle("CoverBrand", fontName="Helvetica-Bold", fontSize=13, textColor=GREEN, leading=16, spaceAfter=28))
-    styles.add(ParagraphStyle("CoverTitle", fontName="Helvetica-Bold", fontSize=28, textColor=TEXT, leading=34, spaceAfter=32))
-    styles.add(ParagraphStyle("CoverLabel", fontName="Helvetica-Bold", fontSize=8, textColor=MUTED, leading=11, spaceBefore=12, spaceAfter=5))
-    styles.add(ParagraphStyle("CoverTarget", fontName="Helvetica-Bold", fontSize=19, textColor=TEXT, leading=24))
+    styles.add(ParagraphStyle("CoverBrand", fontName="Helvetica-Bold", fontSize=14, textColor=GREEN, leading=18, alignment=1, spaceAfter=22))
+    styles.add(ParagraphStyle("CoverTitle", fontName="Helvetica-Bold", fontSize=27, textColor=TEXT, leading=33, alignment=1, spaceAfter=30))
+    styles.add(ParagraphStyle("CoverLabel", fontName="Helvetica-Bold", fontSize=8, textColor=MUTED, leading=11, alignment=1, spaceBefore=12, spaceAfter=5))
+    styles.add(ParagraphStyle("CoverTarget", fontName="Helvetica-Bold", fontSize=19, textColor=TEXT, leading=24, alignment=1))
+    styles.add(ParagraphStyle("CoverAssessment", fontName="Helvetica-Bold", fontSize=13, textColor=GREEN, leading=16, alignment=1, spaceAfter=0))
     styles.add(ParagraphStyle("Section", fontName="Helvetica-Bold", fontSize=16, textColor=GREEN, leading=20, spaceBefore=8, spaceAfter=12))
     styles.add(ParagraphStyle("Body", fontName="Helvetica", fontSize=9, textColor=TEXT, leading=13, spaceAfter=5))
     styles.add(ParagraphStyle("Small", fontName="Helvetica", fontSize=8, textColor=TEXT, leading=11))
@@ -174,8 +197,8 @@ def _styles():
 def _table(rows, styles, widths=None):
     table = Table(rows, colWidths=widths, repeatRows=1, hAlign="LEFT")
     table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), GREEN),
-        ("TEXTCOLOR", (0, 0), (-1, 0), DARKER),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1d4d5b")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), TEXT),
         ("BACKGROUND", (0, 1), (-1, -1), PANEL),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [PANEL, DARK]),
         ("GRID", (0, 0), (-1, -1), 0.35, BORDER),
@@ -198,7 +221,7 @@ def _section(title, styles):
     return [
         Paragraph(title, styles["Section"]),
         Table([[""]], colWidths=[6.5 * inch], rowHeights=[2], style=TableStyle([
-            ("BACKGROUND", (0, 0), (-1, -1), GREEN),
+            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#2dd4bf")),
             ("LINEBELOW", (0, 0), (-1, -1), 0, GREEN),
         ])),
         Spacer(1, 0.08 * inch),
@@ -223,11 +246,11 @@ def generate_osint_pdf(scan_data):
         author="vulnXscanner",
         subject="OSINT Intelligence Report",
     )
-    story = [Spacer(1, 0.55 * inch), Paragraph("VULNXSCANNER", styles["CoverBrand"]), Paragraph("OSINT INTELLIGENCE REPORT", styles["CoverTitle"])]
+    story = [Spacer(1, 1.15 * inch), Paragraph("VULNXSCANNER", styles["CoverBrand"]), Paragraph("OSINT INTELLIGENCE REPORT", styles["CoverTitle"])]
     story.extend([Paragraph("TARGET", styles["CoverLabel"]), Paragraph(escape(report["target"]), styles["CoverTarget"])])
     story.extend([
         Spacer(1, 0.35 * inch),
-        Table([[Paragraph("INTELLIGENCE ASSESSMENT", styles["CoverTarget"])]], colWidths=[6.5 * inch], style=TableStyle([
+            Table([[Paragraph("INTELLIGENCE ASSESSMENT", styles["CoverAssessment"])]], colWidths=[6.5 * inch], style=TableStyle([
             ("BACKGROUND", (0, 0), (-1, -1), PANEL),
             ("BOX", (0, 0), (-1, -1), 0.7, BORDER),
             ("LEFTPADDING", (0, 0), (-1, -1), 14),
@@ -249,6 +272,33 @@ def generate_osint_pdf(scan_data):
         ("Successful modules", report["successful_modules"]),
         ("Failed/unavailable modules", report["failed_modules"]),
     ], styles))
+    overview = report["overview"]
+    overview_rows = [[
+        _paragraph("DNS records", styles["CellHeader"]),
+        _paragraph("IP addresses", styles["CellHeader"]),
+        _paragraph("Nameservers", styles["CellHeader"]),
+        _paragraph("Mail servers", styles["CellHeader"]),
+        _paragraph("Technologies", styles["CellHeader"]),
+    ], [
+        _paragraph(overview["dns_records"], styles["Cell"]),
+        _paragraph(overview["ip_addresses"], styles["Cell"]),
+        _paragraph(overview["nameservers"], styles["Cell"]),
+        _paragraph(overview["mail_servers"], styles["Cell"]),
+        _paragraph(overview["technologies"], styles["Cell"]),
+    ]]
+    overview_table = Table(overview_rows, colWidths=[1.3 * inch] * 5, repeatRows=1)
+    overview_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1d4d5b")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), TEXT),
+        ("BACKGROUND", (0, 1), (-1, -1), DARK),
+        ("GRID", (0, 0), (-1, -1), 0.35, BORDER),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 7),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 7),
+        ("TOPPADDING", (0, 0), (-1, -1), 7),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+    ]))
+    story.extend([Spacer(1, 0.2 * inch), overview_table])
 
     story.extend(_section("DOMAIN INTELLIGENCE", styles))
     domain = report["domain_intelligence"]
@@ -268,6 +318,7 @@ def generate_osint_pdf(scan_data):
     else:
         story.append(Paragraph("No data available for this module in the current scan.", styles["Empty"]))
 
+    story.extend([PageBreak()])
     story.extend(_section("DNS RELATIONSHIP MAP", styles))
     dns_map = report["dns_map"]
     if dns_map.get("edges"):
@@ -301,7 +352,11 @@ def generate_osint_pdf(scan_data):
         story.append(Paragraph("No technologies were detected in this scan.", styles["Empty"]))
 
     story.extend(_section("OSINT FINDINGS", styles))
-    story.append(Paragraph("No additional findings were generated from the available scan data.", styles["Empty"]))
+    if report["findings"]:
+        for finding in report["findings"]:
+            story.append(Paragraph(f"<font color='#34d399'>•</font>  {escape(_text(finding))}", styles["Body"]))
+    else:
+        story.append(Paragraph("No additional findings were generated from the available scan data.", styles["Empty"]))
 
     story.extend(_section("SCAN MODULE STATUS", styles))
     status_rows = [[_paragraph("Module", styles["CellHeader"]), _paragraph("Status", styles["CellHeader"])]]
