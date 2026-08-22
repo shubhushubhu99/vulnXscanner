@@ -108,14 +108,28 @@ function renderResults(results) {
                     </svg>
                     <span>Click for AI expert analysis</span>
                 </div>
-                <div class="cve-btn" role="button" tabindex="0" onclick="openCveReport(event, ${port}, '${service}', '${banner}')" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px; padding: 12px; cursor: pointer; transition: all 0.2s ease;">
+                <div class="cve-btn" id="cve-btn-${port}" role="button" tabindex="0" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px; padding: 12px; cursor: pointer; transition: all 0.2s ease;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                     <span id="cve-status-${port}" style="color: #60a5fa; font-weight: 500; font-size: 0.9rem;">CVE Reports</span>
                 </div>
             </div>
         `;
+
         grid.appendChild(card);
+
+        // CRITICAL: Attach the CVE click AFTER the card is in DOM.
+        // Using stopImmediatePropagation prevents the parent card.onclick
+        // (AI analysis) from ever firing when the CVE button is clicked.
+        const cveBtn = card.querySelector(`#cve-btn-${port}`);
+        if (cveBtn) {
+            cveBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                openCveReport(null, port, service, banner);
+            });
+        }
     });
+
 
     container.appendChild(grid);
 }
