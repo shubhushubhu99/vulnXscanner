@@ -20,6 +20,17 @@ class TestOSINTScan(unittest.TestCase):
         self.assertEqual(result['status'], 'SUCCESS')
         self.assertEqual(result['ip'], '93.184.216.34')
 
+    @patch('core.osint_scan.dns.resolver.resolve')
+    @patch('core.osint_scan.socket.getaddrinfo', side_effect=socket.gaierror())
+    def test_accepts_a_usable_cname_answer(self, getaddrinfo, resolve):
+        resolve.return_value = ['alias.example.net.']
+
+        result = resolve_domain('alias.example.com')
+
+        self.assertEqual(result['status'], 'SUCCESS')
+        self.assertEqual(result['addresses'], [])
+        resolve.assert_called_once_with('alias.example.com', 'CNAME', lifetime=5)
+
     @patch('core.osint_scan.resolve_domain')
     def test_partial_failure_keeps_other_modules(self, resolve):
         resolve.return_value = {
@@ -39,7 +50,7 @@ class TestOSINTScan(unittest.TestCase):
         geo.lookup.assert_called_once_with('93.184.216.34')
 
     @patch('core.osint_scan.resolve_domain')
-    def test_dns_failure_does_not_block_whois(self, resolve):
+    def test_dns_failure_stops_dependent_modules(self, resolve):
         resolve.return_value = {
             'status': 'ERROR', 'ip': None, 'version': None,
             'addresses': [], 'message': 'DNS failed'
@@ -48,11 +59,73 @@ class TestOSINTScan(unittest.TestCase):
         whois.lookup.return_value = {'status': 'SUCCESS', 'domain': 'example.com'}
         geo = Mock()
 
-        result = run_osint_scan('example.com', whois, geo)
+        with self.assertRaisesRegex(ValueError, 'Domain Not Found'):
+            run_osint_scan('example.com', whois, geo)
 
-        self.assertEqual(result['whois']['status'], 'SUCCESS')
-        self.assertEqual(result['ip_geolocation']['status'], 'NOT AVAILABLE')
+        whois.lookup.assert_not_called()
         geo.lookup.assert_not_called()
+
+    @patch('core.osint_scan.resolve_domain')
+    def test_dns_failure_does_not_build_map_or_detect_technology(self, resolve):
+        resolve.return_value = {
+            'status': 'ERROR', 'ip': None, 'version': None,
+            'addresses': [], 'message': 'DNS failed'
+        }
+        whois = Mock()
+        geo = Mock()
+        technology = Mock()
+
+        with self.assertRaises(ValueError):
+            run_osint_scan('example.com', whois, geo, technology)
+
+        whois.lookup.assert_not_called()
+        geo.lookup.assert_not_called()
+        technology.detect.assert_not_called()
+
+    @patch('core.osint_scan.resolve_domain')
+    def test_malformed_target_stops_before_dns_and_modules(self, resolve):
+        whois = Mock()
+        geo = Mock()
+        technology = Mock()
+
+        with self.assertRaisesRegex(ValueError, 'Invalid URL / Domain'):
+            run_osint_scan('not-a-valid-url-%%%%', whois, geo, technology)
+
+        resolve.assert_not_called()
+        whois.lookup.assert_not_called()
+        geo.lookup.assert_not_called()
+        technology.detect.assert_not_called()
+
+    @patch('core.osint_scan.resolve_domain')
+    def test_unresolved_url_stops_before_dependent_modules(self, resolve):
+        resolve.return_value = {
+            'status': 'ERROR', 'ip': None, 'version': None,
+            'addresses': [], 'message': 'DNS failed'
+        }
+        whois = Mock()
+        geo = Mock()
+        technology = Mock()
+
+        with self.assertRaisesRegex(ValueError, 'URL Not Found'):
+            run_osint_scan('https://does-not-exist.example', whois, geo, technology)
+
+        whois.lookup.assert_not_called()
+        geo.lookup.assert_not_called()
+        technology.detect.assert_not_called()
+
+    @patch('core.osint_scan.resolve_domain')
+    def test_invalid_ip_format_stops_before_dns_and_modules(self, resolve):
+        whois = Mock()
+        geo = Mock()
+        technology = Mock()
+
+        with self.assertRaisesRegex(ValueError, 'Invalid IP Address'):
+            run_osint_scan('999.999.999.999', whois, geo, technology)
+
+        resolve.assert_not_called()
+        whois.lookup.assert_not_called()
+        geo.lookup.assert_not_called()
+        technology.detect.assert_not_called()
 
     @patch('core.osint_scan.resolve_domain')
     def test_whois_failure_does_not_block_geolocation(self, resolve):
