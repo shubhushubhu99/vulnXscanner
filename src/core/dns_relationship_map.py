@@ -1,4 +1,5 @@
 import ipaddress
+import re
 
 import dns.exception
 import dns.resolver
@@ -56,9 +57,14 @@ class DNSRelationshipMap:
 
         def connect(record_type, value, node_type):
             target_id = _add_node(nodes, node_ids, node_type, value)
-            edge_id = (record_type, target_id)
+            record_id = _add_node(nodes, node_ids, "RECORD", record_type)
+            edge_id = (root_id, record_id)
+            if record_id and edge_id not in edge_ids:
+                edges.append({"source": root_id, "target": record_id, "relationship": record_type})
+                edge_ids.add(edge_id)
+            edge_id = (record_id, target_id)
             if target_id and edge_id not in edge_ids:
-                edges.append({"source": root_id, "target": target_id, "relationship": record_type})
+                edges.append({"source": record_id, "target": target_id, "relationship": ""})
                 edge_ids.add(edge_id)
 
         for value in records.get("A", []):
@@ -87,7 +93,8 @@ class DNSRelationshipMap:
         if records.get("CAA"):
             metadata["CAA"] = [
                 {
-                    "issuer": value.split('"', 2)[1] if '"' in value else value,
+                    "issuer": re.search(r'"([^"]+)"', value).group(1)
+                    if re.search(r'"([^"]+)"', value) else value,
                     "raw": value,
                 }
                 for value in records["CAA"]

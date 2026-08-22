@@ -36,9 +36,10 @@ class TestDNSRelationshipMap(unittest.TestCase):
             {'addresses': ['93.184.216.34', '2001:db8::1']},
         )
         node_types = {node['type'] for node in graph['nodes']}
-        relationships = {edge['relationship'] for edge in graph['edges']}
+        relationships = {edge['relationship'] for edge in graph['edges'] if edge['relationship']}
         self.assertEqual(graph['status'], 'SUCCESS')
         self.assertIn('DOMAIN', node_types)
+        self.assertIn('RECORD', node_types)
         self.assertIn('IP', node_types)
         self.assertIn('MAIL', node_types)
         self.assertIn('NAMESERVER', node_types)
@@ -53,8 +54,8 @@ class TestDNSRelationshipMap(unittest.TestCase):
     def test_deduplicates_values(self):
         resolver = self.make_resolver({'NS': ['ns1.example.com.', 'ns1.example.com.']})
         graph = DNSRelationshipMap(resolver=resolver).build('example.com')
-        self.assertEqual(len(graph['edges']), 1)
-        self.assertEqual(len(graph['nodes']), 2)
+        self.assertEqual(len(graph['edges']), 2)
+        self.assertEqual(len(graph['nodes']), 3)
 
     def test_standalone_map_queries_address_records(self):
         resolver = self.make_resolver({'A': ['93.184.216.34']})
