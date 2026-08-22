@@ -143,6 +143,7 @@ function renderIpGeo(data) {
 }
 
 let unifiedScanSequence = 0;
+let currentUnifiedOsintData = null;
 
 document.getElementById('unifiedOsintForm').addEventListener('submit', async function(event) {
     event.preventDefault();
@@ -169,6 +170,7 @@ document.getElementById('unifiedOsintForm').addEventListener('submit', async fun
         const data = await response.json();
         if (scanSequence !== unifiedScanSequence) return;
         if (!response.ok) throw new Error(data.error || 'OSINT scan failed');
+        currentUnifiedOsintData = data;
         renderUnifiedOsint(data);
     } catch (error) {
         if (scanSequence !== unifiedScanSequence) return;
@@ -239,14 +241,54 @@ function renderUnifiedOsint(data) {
             ['Status', technology.status]
         ]),
         `<section class="unified-osint-card dns-map-card"><h3>DNS RELATIONSHIP MAP</h3><div id="dnsRelationshipMap"></div></section>`,
-        section('SCAN SUMMARY', [
+        `<section class="unified-osint-card"><div class="osint-summary-heading"><h3>SCAN SUMMARY</h3><button type="button" class="osint-report-button" id="osintReportButton">↓ Generate PDF Report</button></div>${rows([
             ['Domain', data.summary.domain], ['Resolved IP', data.summary.resolved_ip],
             ['WHOIS', data.summary.whois], ['IP Geolocation', data.summary.ip_geolocation],
             ['Technology Detection', data.summary.technology_detection],
             ['Overall Scan Status', data.summary.overall]
-        ])
+        ])}</section>`
     ].join('');
+    const reportButton = document.getElementById('osintReportButton');
+    if (reportButton) reportButton.addEventListener('click', generateOsintReport);
     renderDnsRelationshipMap(dnsMap);
+}
+
+async function generateOsintReport() {
+    const button = document.getElementById('osintReportButton');
+    if (!button || !currentUnifiedOsintData) return;
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Generating OSINT Report...';
+    try {
+        const response = await fetch('/api/osint/report', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(currentUnifiedOsintData)
+        });
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.error || 'OSINT PDF report generation failed');
+        }
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `vulnxscanner_${currentUnifiedOsintData.target || 'unknown'}_OSINT_Report.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        button.textContent = 'OSINT Report generated successfully.';
+    } catch (error) {
+        button.textContent = error.message;
+    } finally {
+        setTimeout(() => {
+            if (button) {
+                button.disabled = false;
+                button.textContent = originalText;
+            }
+        }, 2500);
+    }
 }
 
 function renderDnsRelationshipMap(data) {
@@ -256,6 +298,10 @@ function renderDnsRelationshipMap(data) {
 
     const nodes = data.nodes || [];
     const center = nodes.find(node => node.type === 'DOMAIN');
+    if (!center) {
+        container.innerHTML = `<p class="dns-map-empty">${escapeHtml(data.status === 'FAILED' ? 'Unable to build relationship map.' : 'No DNS relationships available for this domain.')}</p>`;
+        return;
+    }
     const children = nodes.filter(node => node.id !== center.id);
     const width = 900;
     const height = Math.max(420, children.length * 75);

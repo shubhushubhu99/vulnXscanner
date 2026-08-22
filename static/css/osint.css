@@ -295,3 +295,14 @@
 .dns-map-metadata-card strong { color: #f8fafc; overflow-wrap: anywhere; }
 .dns-map-metadata-card details { color: #cbd5e1; }
 .dns-map-detail { display: grid; gap: 0.35rem; margin-top: 1rem; padding: 0.9rem; border-left: 3px solid #22c55e; background: #111827; color: #e2e8f0; }
+
+.osint-report-button { margin-left: auto; border: 1px solid #2dd4bf; border-radius: 6px; padding: 0.55rem 0.8rem; background: transparent; color: #99f6e4; cursor: pointer; font-size: 0.78rem; font-weight: 700; }
+.osint-report-button:hover { background: rgba(45, 212, 191, 0.12); }
+.osint-report-button:disabled { opacity: 0.65; cursor: wait; }
+.osint-summary-heading { display: flex; align-items: center; gap: 0.55rem; }
+.osint-summary-heading h3 { margin-bottom: 0; }
+
+@media (max-width: 600px) {
+    .osint-summary-heading { flex-wrap: wrap; }
+    .osint-report-button { margin-left: 0; width: 100%; }
+}
