@@ -1224,3 +1224,8 @@ footer {
 @keyframes cve-spin {
     to { transform: rotate(360deg); }
 }
+
+@keyframes fadeInLine {
+    from { opacity: 0; transform: translateX(-6px); }
+    to   { opacity: 1; transform: translateX(0); }
+}

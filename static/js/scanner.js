@@ -33,6 +33,28 @@ function initSocket() {
         handleCveResults(data);
     });
 
+    socket.on('cve_log', (data) => {
+        const modal = document.getElementById('cveModal');
+        const headerTitle = document.getElementById('cveModalTitle');
+        if (modal && modal.style.display === 'flex' && headerTitle && headerTitle.innerText.includes(`Port ${data.port}`)) {
+            const logEl = document.getElementById('cveModalLog');
+            if (logEl) {
+                const line = document.createElement('div');
+                line.style.cssText = 'padding: 2px 0; animation: fadeInLine 0.2s ease;';
+                line.textContent = '> ' + data.message;
+                // Color coding
+                if (data.message.includes('✅')) line.style.color = '#10b981';
+                else if (data.message.includes('❌')) line.style.color = '#ef4444';
+                else if (data.message.includes('⚠️')) line.style.color = '#f59e0b';
+                else if (data.message.includes('🛡️') || data.message.includes('→')) line.style.color = '#60a5fa';
+                else if (data.message.includes('📦') || data.message.includes('🔴') || data.message.includes('🟠')) line.style.color = '#c084fc';
+                else line.style.color = '#94a3b8';
+                logEl.appendChild(line);
+                logEl.scrollTop = logEl.scrollHeight;
+            }
+        }
+    });
+
     socket.on('scan_complete', (data) => {
         addTerminalLine(`\n✅ Scan completed! Found ${data.total_open} open ports.`);
         const btn = document.getElementById('analyzeBtn');
@@ -130,7 +152,10 @@ function handleCveResults(data) {
 }
 
 function openCveReport(event, port, service, banner) {
-    event.stopPropagation();
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
     
     const modal = document.getElementById('cveModal');
     if (!modal) return;
@@ -145,13 +170,36 @@ function openCveReport(event, port, service, banner) {
     
     if (!data) {
         content.innerHTML = `
-            <div style="text-align: center; padding: 40px;">
-                <div class="cve-spinner"></div>
-                <p style="color: var(--text-secondary); margin-top: 15px;">Querying NVD Database...</p>
+            <div style="padding: 20px 0;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
+                    <div class="cve-spinner" style="width:20px;height:20px;flex-shrink:0;"></div>
+                    <span style="color: var(--text-secondary); font-size: 0.9rem; font-weight: 500;">Querying NVD database in real-time...</span>
+                </div>
+                <div id="cveModalLog" style="
+                    background: #0a0a0f;
+                    border: 1px solid rgba(59,130,246,0.15);
+                    border-radius: 8px;
+                    padding: 14px 16px;
+                    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+                    font-size: 0.82rem;
+                    line-height: 1.7;
+                    max-height: 280px;
+                    overflow-y: auto;
+                    color: #94a3b8;
+                "></div>
             </div>
         `;
-        // The backend might still be processing. 
-        // We just wait for the websocket event to update this cache.
+        
+        const targetInput = document.getElementById('targetInput');
+        const target = targetInput ? targetInput.value.trim() : 'Unknown';
+        
+        socket.emit('fetch_cve', {
+            target: target,
+            port: port,
+            service: service,
+            banner: banner
+        });
+        
         return;
     }
     
