@@ -28,17 +28,28 @@
 }
 
 /* 2. Input Box & Spacing */
-#osintTarget {
+.unified-osint-search {
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.unified-osint-search label {
+    display: block;
+    color: var(--vulnx-muted);
+    margin-bottom: 0.5rem;
+}
+
+#unifiedOsintTarget {
     background: #010409;
     border: 1px solid #30363d;
-    color: #ffffff;
+    color: #fff;
     padding: 1.2rem 1.5rem;
     border-radius: 12px;
     font-size: 1.1rem;
     width: 100%;
     max-width: 800px;
-    margin-bottom: 2rem; /* Space between input and button */
-    transition: all 0.3s ease;
 }
 
 #osintTarget:focus {
@@ -46,6 +57,48 @@
     box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
     outline: none;
 }
+
+.search-section label {
+    display: block;
+    color: var(--vulnx-muted);
+    margin-bottom: 0.5rem;
+}
+
+.whois-message {
+    min-height: 1.5rem;
+    margin: 0.5rem 0;
+    color: var(--vulnx-muted);
+}
+
+.whois-message.error { color: #f87171; }
+.whois-message.success { color: var(--vulnx-emerald); }
+.whois-message.warning { color: #fbbf24; }
+.whois-loading { color: var(--vulnx-muted); padding: 1rem 0; }
+
+.whois-card {
+    background: #010409;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+.whois-card h3 {
+    color: var(--vulnx-emerald);
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
+    margin: 0 0 1rem;
+}
+
+.whois-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.7rem 0;
+    border-top: 1px solid #1f2937;
+}
+
+.whois-row span { color: var(--vulnx-muted); }
+.whois-row strong { color: #fff; text-align: right; overflow-wrap: anywhere; }
 
 /* 3. Button Styling */
 #startOsint {
@@ -57,10 +110,98 @@
     border: none;
     cursor: pointer;
     font-size: 1rem;
-    transition: transform 0.2s, box-shadow 0.2s;
+    margin-top: 1rem;
 }
 
-#startOsint:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(34, 197, 94, 0.4);
+.unified-osint-message { min-height: 1.5rem; color: var(--vulnx-emerald); }
+.unified-osint-message.error { color: #f87171; }
+.unified-osint-progress {
+    display: grid;
+    gap: 0.4rem;
+    color: var(--vulnx-muted);
+    margin: 1rem 0 1.5rem;
+}
+.unified-osint-results { display: grid; gap: 1rem; }
+.osint-module-tabs { display: flex; gap: 0.25rem; overflow-x: auto; padding: 0.35rem; border: 1px solid #30363d; border-radius: 10px; background: #0b1220; scrollbar-width: thin; }
+.osint-module-tab { flex: 0 0 auto; border: 0; border-bottom: 2px solid transparent; border-radius: 6px; padding: 0.7rem 0.95rem; background: transparent; color: #94a3b8; cursor: pointer; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.04em; white-space: nowrap; }
+.osint-module-tab:hover { color: #e2e8f0; background: #111827; }
+.osint-module-tab.active { border-bottom-color: #2dd4bf; background: #123d3b; color: #ccfbf1; }
+.osint-module-tabs .osint-report-actions { flex: 0 0 auto; align-items: center; border: 0; border-left: 1px solid #245b5b; border-radius: 0; padding: 0 0 0 0.65rem; background: transparent; }
+.osint-module-tabs .osint-report-actions > div { display: none; }
+.osint-module-tabs .osint-report-button { padding: 0.7rem 0.95rem; }
+.osint-module-content { min-width: 0; }
+.osint-module-panel[hidden] { display: none; }
+.osint-module-panel > .unified-osint-card { margin: 0; }
+.unified-osint-empty { padding: 1.25rem; color: var(--vulnx-muted); }
+.unified-osint-card {
+    background: #010409;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+.unified-osint-card h3 {
+    color: var(--vulnx-emerald);
+    font-size: 0.9rem;
+    letter-spacing: 0.06em;
+    margin: 0 0 1rem;
+}
+.unified-osint-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.7rem 0;
+    border-top: 1px solid #1f2937;
+}
+.unified-osint-row span { color: var(--vulnx-muted); }
+.unified-osint-row strong { color: #fff; text-align: right; overflow-wrap: anywhere; }
+
+.dns-map-card { overflow: hidden; }
+.dns-map-svg { width: 100%; min-height: 420px; background: #0b1220; border: 1px solid #30363d; border-radius: 10px; cursor: grab; touch-action: none; }
+.dns-map-svg:active { cursor: grabbing; }
+.dns-map-edge { stroke: #64748b; stroke-width: 2; marker-end: url(#dns-map-arrow); }
+.dns-map-edge-label { fill: #d1d5db; font-size: 12px; text-anchor: middle; }
+.dns-map-node circle { stroke: #cbd5e1; stroke-width: 2; fill: #334155; }
+.dns-map-node text { fill: #fff; font-size: 11px; pointer-events: none; }
+.dns-map-domain circle { fill: #10b981; stroke: #a7f3d0; }
+.dns-map-ip circle { fill: #2563eb; stroke: #bfdbfe; }
+.dns-map-mail circle { fill: #d97706; stroke: #fed7aa; }
+.dns-map-nameserver circle { fill: #7c3aed; stroke: #ddd6fe; }
+.dns-map-cname circle { fill: #0891b2; stroke: #a5f3fc; }
+.dns-map-txt circle, .dns-map-soa circle, .dns-map-caa circle { fill: #475569; stroke: #cbd5e1; }
+.dns-map-empty { color: #fbbf24; padding: 1rem 0; }
+.dns-map-legend { display: flex; flex-wrap: wrap; gap: 0.8rem 1.25rem; color: var(--vulnx-muted); font-size: 0.85rem; margin-top: 0.75rem; }
+.dns-map-legend-item { display: inline-flex; align-items: center; gap: 0.35rem; }
+.dns-map-legend-dot { width: 0.65rem; height: 0.65rem; border-radius: 50%; display: inline-block; background: #475569; }
+.dns-map-legend-dot.dns-map-domain { background: #10b981; }
+.dns-map-legend-dot.dns-map-ip { background: #2563eb; }
+.dns-map-legend-dot.dns-map-mail { background: #d97706; }
+.dns-map-legend-dot.dns-map-nameserver { background: #7c3aed; }
+.dns-map-legend-dot.dns-map-cname { background: #0891b2; }
+.dns-map-summary, .dns-map-metadata { margin-bottom: 1rem; padding: 1rem; border: 1px solid #30363d; border-radius: 10px; background: #0b1220; }
+.dns-map-summary h4, .dns-map-metadata h4 { color: #a7f3d0; margin: 0 0 0.75rem; font-size: 0.85rem; letter-spacing: 0.08em; }
+.dns-map-summary > div { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.dns-map-summary-item { display: inline-flex; gap: 0.5rem; padding: 0.45rem 0.7rem; border: 1px solid #334155; border-radius: 6px; color: #e2e8f0; }
+.dns-map-summary-item strong { color: #67e8f9; }
+.dns-map-metadata { display: grid; gap: 0.8rem; }
+.dns-map-metadata > h4 { grid-column: 1 / -1; }
+.dns-map-metadata-card { padding: 0.8rem; border: 1px solid #334155; border-radius: 8px; }
+.dns-map-metadata-card h4 { color: #67e8f9; margin: 0 0 0.6rem; font-size: 0.8rem; }
+.dns-map-metadata-card div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.35rem 0; border-top: 1px solid #1e293b; }
+.dns-map-metadata-card span { color: var(--vulnx-muted); }
+.dns-map-metadata-card strong { color: #f8fafc; overflow-wrap: anywhere; }
+.dns-map-metadata-card details { color: #cbd5e1; }
+.dns-map-detail { display: grid; gap: 0.35rem; margin-top: 1rem; padding: 0.9rem; border-left: 3px solid #22c55e; background: #111827; color: #e2e8f0; }
+
+.osint-report-actions { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; border: 1px solid #245b5b; border-left: 3px solid #2dd4bf; border-radius: 10px; padding: 1.15rem 1.35rem; background: linear-gradient(135deg, #0b1720, #0b1220); }
+.osint-report-actions h3 { margin: 0; color: #99f6e4; font-size: 0.85rem; letter-spacing: 0.1em; }
+.osint-report-actions p { margin: 0.35rem 0 0; color: var(--vulnx-muted); font-size: 0.85rem; }
+.osint-report-button { border: 1px solid #34d399; border-radius: 6px; padding: 0.8rem 1.15rem; background: #123d3b; color: #d1fae5; cursor: pointer; font-size: 0.82rem; font-weight: 800; letter-spacing: 0.04em; white-space: nowrap; }
+.osint-report-button:hover { background: #18534f; box-shadow: 0 0 18px rgba(45, 212, 191, 0.18); }
+.osint-report-button:disabled { opacity: 0.65; cursor: wait; }
+.osint-summary-heading { display: flex; align-items: center; gap: 0.55rem; }
+.osint-summary-heading h3 { margin-bottom: 0; }
+
+@media (max-width: 600px) {
+    .osint-module-tabs .osint-report-actions { align-items: center; flex-direction: row; }
+    .osint-module-tabs .osint-report-button { width: auto; }
 }
