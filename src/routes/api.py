@@ -4,7 +4,7 @@ import ssl
 import requests
 from flask import Blueprint, request, jsonify, session, send_file
 
-from services.ai_service import generate_port_analysis, generate_db_analysis
+from services.ai_service import generate_port_analysis, generate_db_analysis, explain_cve
 from core.mapper import TopologyMapper
 from core.osint_engine import OSINTEngine
 from core.whois_lookup import WhoisLookup
@@ -62,7 +62,8 @@ def ai_analysis():
     severity = data.get('severity', 'Low')
     result = generate_port_analysis(port, service, banner, severity)
     status_code = result.pop('_status_code', 200)
-    return jsonify(result), status_code
+    # Return 200 so the browser doesn't log a console error for handled AI failures
+    return jsonify(result), 200
 
 
 @api_bp.route('/db_analysis', methods=['POST'])
@@ -82,7 +83,61 @@ def db_analysis():
         vuln_recommendation,
     )
     status_code = result.pop('_status_code', 200)
-    return jsonify(result), status_code
+    return jsonify(result), 200
+
+
+@api_bp.route('/cve_explain', methods=['POST'])
+def cve_explain():
+    """AI plain-language explanation for a single CVE using NVD-provided facts.
+
+    Accepts structured CVE data from the frontend (the same dict produced by
+    CveData.to_dict()) and returns a Gemini-generated structured explanation.
+
+    The original NVD data is never mutated; only read for the AI prompt.
+
+    Request body:
+        {
+            "cve_data": {
+                "id": "CVE-XXXX-XXXXX",
+                "description": "...",
+                "cvss_score": 10.0,
+                "severity": "CRITICAL",
+                "cvss_vector": "...",
+                "cpe": "...",
+                "published": "...",
+                "last_modified": "...",
+                "references": [...],
+                "affected_products": [...],
+                "affected_versions": [...]
+            }
+        }
+
+    Returns:
+        {
+            "success": True,
+            "data": {
+                "cve_id": "...",
+                "summary": "...",
+                "why_it_matters": "...",
+                "potential_impact": "...",
+                "affected_system": "...",
+                "recommended_action": "...",
+                "verification_steps": "..."
+            }
+        }
+    """
+    body = request.get_json() or {}
+    cve_data = body.get('cve_data')
+
+    if not cve_data:
+        return jsonify({'success': False, 'error': 'cve_data is required'}), 400
+
+    if not (cve_data.get('id') or cve_data.get('cve_id')):
+        return jsonify({'success': False, 'error': 'cve_data must contain a CVE id'}), 400
+
+    result = explain_cve(cve_data)
+    status_code = result.pop('_status_code', 200)
+    return jsonify(result), 200
 
 
 @api_bp.route('/clear-history', methods=['POST'])
