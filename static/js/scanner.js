@@ -220,6 +220,10 @@ function openCveReport(event, port, service, banner) {
     renderCveModalContent(data, content);
 }
 
+// ── Per-CVE AI explanation cache ─────────────────────────────────────────────
+// Keys: cve_id (string). Values: { success, data } from /cve_explain response.
+window.cveExplanationCache = {};
+
 function renderCveModalContent(data, contentContainer) {
     if (data.status === 'no_cpe_match') {
         contentContainer.innerHTML = `
@@ -230,7 +234,7 @@ function renderCveModalContent(data, contentContainer) {
         `;
         return;
     }
-    
+
     if (data.cve_count === 0) {
         contentContainer.innerHTML = `
             <div style="text-align: center; padding: 30px;">
@@ -241,7 +245,7 @@ function renderCveModalContent(data, contentContainer) {
         `;
         return;
     }
-    
+
     let html = `
         <div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border);">
             <p style="color: var(--text-secondary); font-size: 0.9rem;">Resolved CPE: <code style="color: var(--accent); background: rgba(16,185,129,0.1); padding: 2px 6px; border-radius: 4px;">${data.resolved_cpe}</code></p>
@@ -249,32 +253,225 @@ function renderCveModalContent(data, contentContainer) {
         </div>
         <div style="display: flex; flex-direction: column; gap: 15px;">
     `;
-    
+
     data.cves.forEach(cve => {
-        const scoreColor = cve.cvss_score >= 9.0 ? 'var(--critical)' : 
+        const scoreColor = cve.cvss_score >= 9.0 ? 'var(--critical)' :
                           (cve.cvss_score >= 7.0 ? 'var(--high)' : 'var(--medium)');
-                          
+        const safeId = cve.id.replace(/[^a-zA-Z0-9-]/g, '_');
+
         html += `
-            <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 16px;">
-                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
-                    <h4 style="color: var(--text-main); font-size: 1.1rem; margin: 0;">${cve.id}</h4>
-                    <span style="background: ${scoreColor}22; color: ${scoreColor}; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 0.85rem;">CVSS: ${cve.cvss_score}</span>
+            <div id="cve-card-${safeId}" style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 18px; transition: border-color 0.2s ease;">
+                <!-- NVD FACTS -->
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <h4 style="color: var(--text-main); font-size: 1.05rem; margin: 0; font-family: 'JetBrains Mono', monospace;">${cve.id}</h4>
+                        <span style="background: ${scoreColor}22; color: ${scoreColor}; padding: 3px 9px; border-radius: 12px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.05em;">${cve.severity}</span>
+                    </div>
+                    <span style="background: ${scoreColor}22; color: ${scoreColor}; padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.9rem;">CVSS ${cve.cvss_score}</span>
                 </div>
-                <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; margin-bottom: 15px;">${cve.description}</p>
-                <div style="display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.8rem; color: var(--text-muted);">
-                    <span><strong style="color: var(--text-secondary);">Published:</strong> ${cve.published.split('T')[0]}</span>
-                    <span><strong style="color: var(--text-secondary);">Vector:</strong> ${cve.cvss_vector}</span>
+                <div style="margin-bottom: 12px;">
+                    <span style="display: inline-block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; color: #60a5fa; text-transform: uppercase; margin-bottom: 6px; background: rgba(59,130,246,0.08); padding: 2px 8px; border-radius: 4px;">NVD Facts</span>
+                    <p style="color: var(--text-secondary); font-size: 0.92rem; line-height: 1.55; margin: 0;">${cve.description}</p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.78rem; color: var(--text-muted); margin-top: 10px;">
+                        <span><strong style="color: var(--text-secondary);">Published:</strong> ${(cve.published || '').split('T')[0] || 'N/A'}</span>
+                        <span><strong style="color: var(--text-secondary);">Vector:</strong> ${cve.cvss_vector || 'N/A'}</span>
+                        ${cve.cpe ? '<span><strong style="color: var(--text-secondary);">CPE:</strong> <code style="font-size:0.72rem;">' + cve.cpe + '</code></span>' : ''}
+                    </div>
                 </div>
+                <!-- AI Explain Button -->
+                <button
+                    id="ai-explain-btn-${safeId}"
+                    data-cve-id="${cve.id}"
+                    data-safe-id="${safeId}"
+                    style="
+                        display: flex; align-items: center; gap: 8px;
+                        background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(59,130,246,0.10));
+                        border: 1px solid rgba(139,92,246,0.35);
+                        border-radius: 8px; padding: 9px 16px; cursor: pointer;
+                        color: #c4b5fd; font-size: 0.88rem; font-weight: 600;
+                        transition: all 0.2s ease; width: 100%; justify-content: center;
+                        margin-top: 4px;
+                    "
+                >
+                    Explain with AI
+                </button>
+                <!-- AI Explanation Panel (injected on demand) -->
+                <div id="ai-panel-${safeId}" style="display: none; margin-top: 14px;"></div>
             </div>
         `;
     });
-    
+
     html += `</div>`;
     contentContainer.innerHTML = html;
+
+    // Attach button event listeners after HTML is in DOM
+    data.cves.forEach(cve => {
+        const safeId = cve.id.replace(/[^a-zA-Z0-9-]/g, '_');
+        const btn = document.getElementById('ai-explain-btn-' + safeId);
+        if (btn) {
+            btn.addEventListener('mouseover', function() {
+                if (!this.disabled) {
+                    this.style.background = 'linear-gradient(135deg,rgba(139,92,246,0.28),rgba(59,130,246,0.18))';
+                    this.style.borderColor = 'rgba(139,92,246,0.6)';
+                }
+            });
+            btn.addEventListener('mouseout', function() {
+                if (!this.disabled) {
+                    this.style.background = 'linear-gradient(135deg,rgba(139,92,246,0.15),rgba(59,130,246,0.10))';
+                    this.style.borderColor = 'rgba(139,92,246,0.35)';
+                }
+            });
+            btn.addEventListener('click', function() {
+                requestCveExplanation(this.dataset.cveId, this.dataset.safeId);
+            });
+        }
+        // Re-attach cached explanations if the modal was re-opened
+        if (window.cveExplanationCache[cve.id]) {
+            _renderCveExplanationPanel(safeId, cve.id, window.cveExplanationCache[cve.id]);
+        }
+    });
+}
+
+/**
+ * Called when the user clicks "Explain with AI" for a specific CVE.
+ * Checks cache first; otherwise POSTs to /cve_explain.
+ */
+function requestCveExplanation(cveId, safeId) {
+    // Cache hit: render immediately without a network call
+    if (window.cveExplanationCache[cveId]) {
+        _renderCveExplanationPanel(safeId, cveId, window.cveExplanationCache[cveId]);
+        return;
+    }
+
+    const btn = document.getElementById('ai-explain-btn-' + safeId);
+    const panel = document.getElementById('ai-panel-' + safeId);
+    if (!panel) return;
+
+    // Loading state
+    if (btn) {
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+        btn.style.cursor = 'not-allowed';
+        btn.textContent = 'Generating explanation\u2026';
+    }
+    panel.style.display = 'block';
+    panel.innerHTML = '<div style="background: rgba(139,92,246,0.06); border: 1px solid rgba(139,92,246,0.2); border-radius: 8px; padding: 16px; text-align: center; color: var(--text-muted); font-size: 0.88rem;">Contacting AI\u2026 this may take a few seconds.</div>';
+
+    // Find full CVE data from the port data cache
+    let cveData = null;
+    for (const portKey of Object.keys(window.cveDataCache || {})) {
+        const portData = window.cveDataCache[portKey];
+        if (portData && portData.cves) {
+            const match = portData.cves.find(function(c) { return c.id === cveId; });
+            if (match) { cveData = match; break; }
+        }
+    }
+    if (!cveData) { cveData = { id: cveId }; }
+
+    // POST to backend
+    fetch('/cve_explain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cve_data: cveData })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(result) {
+        window.cveExplanationCache[cveId] = result;
+        _renderCveExplanationPanel(safeId, cveId, result);
+    })
+    .catch(function(err) {
+        console.error('CVE explain fetch failed:', err);
+        _renderCveExplanationPanel(safeId, cveId, {
+            success: false,
+            error: 'Network error — could not reach the AI service. The NVD vulnerability information above is still accurate.'
+        });
+    })
+    .finally(function() {
+        if (btn) {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+            btn.textContent = 'Explain with AI';
+        }
+    });
+}
+
+/**
+ * Renders the AI explanation result inside the panel div for a given CVE card.
+ */
+function _renderCveExplanationPanel(safeId, cveId, result) {
+    const panel = document.getElementById('ai-panel-' + safeId);
+    if (!panel) return;
+    panel.style.display = 'block';
+
+    // Error state
+    if (!result || !result.success) {
+        const msg = (result && result.error)
+            ? result.error
+            : 'AI explanation is currently unavailable. The original NVD vulnerability information above is still accurate.';
+        panel.innerHTML =
+            '<div style="background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.25); border-radius: 8px; padding: 14px 16px; font-size: 0.87rem; color: #fca5a5; line-height: 1.5;">' +
+                '<strong>\u26A0\uFE0F AI Unavailable</strong><br>' + _escHtml(msg) +
+            '</div>' +
+            '<button onclick="document.getElementById(\'ai-panel-' + safeId + '\').style.display=\'none\'" ' +
+                'style="margin-top:8px;background:none;border:none;color:var(--text-muted);font-size:0.8rem;cursor:pointer;padding:0;">Hide</button>';
+        return;
+    }
+
+    var d = result.data || {};
+    var rows = [
+        { icon: '\uD83D\uDD0D', label: 'What is this?',       field: 'what_is_this'            },
+        { icon: '\u26A0\uFE0F', label: 'Why should I care?', field: 'why_should_i_care'     },
+        { icon: '\uD83C\uDFAF', label: 'What could happen?',     field: 'what_could_happen'   },
+        { icon: '\uD83D\uDDA5\uFE0F', label: 'Am I affected?', field: 'am_i_affected'   },
+        { icon: '\uD83D\uDD27', label: 'What should I do?',    field: 'what_should_i_do' },
+        { icon: '\u2705',       label: 'How do I verify the fix?', field: 'how_do_i_verify_the_fix' }
+    ];
+
+    var rowsHtml = rows.map(function(r) {
+        var text = d[r.field];
+        if (!text) return '';
+        return '<div style="padding: 10px 0; border-bottom: 1px solid rgba(139,92,246,0.1);">' +
+            '<div style="font-size: 0.78rem; font-weight: 700; color: #a78bfa; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 4px;">' +
+                r.icon + ' ' + _escHtml(r.label) +
+            '</div>' +
+            '<div style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">' +
+                _escHtml(text) +
+            '</div>' +
+        '</div>';
+    }).join('');
+
+    panel.innerHTML =
+        '<div style="background: linear-gradient(135deg, rgba(139,92,246,0.06), rgba(59,130,246,0.04)); border: 1px solid rgba(139,92,246,0.25); border-radius: 10px; padding: 16px 18px;">' +
+            '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid rgba(139,92,246,0.2);">' +
+                '<span style="font-size: 0.8rem; font-weight: 700; color: #a78bfa; text-transform: uppercase; letter-spacing: 0.08em;">' +
+                    '\u2728 AI Explanation' +
+                '</span>' +
+                '<button onclick="document.getElementById(\'ai-panel-' + safeId + '\').style.display=\'none\'" ' +
+                    'style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.8rem;padding:2px 6px;border-radius:4px;">' +
+                    'Hide \u2715' +
+                '</button>' +
+            '</div>' +
+            '<div style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 10px; font-style: italic;">' +
+                'Generated by AI based on NVD data. Not a substitute for authoritative security advisories.' +
+            '</div>' +
+            rowsHtml +
+        '</div>';
+}
+
+/** Escapes HTML special chars to prevent XSS from AI-generated content. */
+function _escHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 function closeCveModal() {
-    const modal = document.getElementById('cveModal');
+    var modal = document.getElementById('cveModal');
     if (modal) {
         modal.style.display = 'none';
     }

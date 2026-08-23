@@ -17,7 +17,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_OAUTH_TOKEN = os.getenv("GEMINI_OAUTH_TOKEN")
 # Optional explicit auth type: 'api_key' or 'bearer'. If unset, we auto-detect.
 GEMINI_AUTH_TYPE = os.getenv("GEMINI_AUTH_TYPE")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
 
 
 
